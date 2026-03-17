@@ -11,7 +11,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE_VERSION:=43ba8a3cb1b5f8c44b2a827b924375f1de733370
 PKG_SOURCE:=redsocks-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/semigodking/redsocks/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/redsocks/tar.gz/$(PKG_SOURCE_VERSION)?
 PKG_HASH:=7431089ba99f0830c5c11ee1203f720ff19e734aa99fbd87334f9f4547d15b3c
 PKG_BUILD_DIR:=$(BUILD_DIR)/redsocks-$(PKG_SOURCE_VERSION)
 
@@ -28,7 +28,7 @@ define Package/redsocks2
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=Redirect TCP connection to proxy server
-  URL:=https://github.com/semigodking/redsocks
+  URL:=https://github.com/kenzok8/redsocks
   DEPENDS:=+libevent2 +libopenssl
 endef
 
