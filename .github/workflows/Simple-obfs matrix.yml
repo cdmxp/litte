@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prep.outputs.matrix) }}
-    name: simple-obfs ${{ matrix.arch }}-24.10.2
+    name: simple-obfs ${{ matrix.arch }}-24.10.4
     steps:
       - uses: actions/checkout@main
         with:
@@ -39,7 +39,7 @@ jobs:
       - name: Build simple-obfs (strict)
         uses: kenzok8/gh-action-sdk@hash
         env:
-          ARCH: ${{ matrix.arch }}-24.10.2
+          ARCH: ${{ matrix.arch }}-24.10.4
           FEEDNAME: packages_ci
           PACKAGES: simple-obfs
           NO_REFRESH_CHECK: true
