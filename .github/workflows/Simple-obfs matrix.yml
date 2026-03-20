@@ -8,9 +8,6 @@ on:
         required: true
         default: 'x86_64,aarch64_cortex-a53'
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   prep:
     runs-on: ubuntu-latest
@@ -32,7 +29,7 @@ jobs:
       matrix: ${{ fromJson(needs.prep.outputs.matrix) }}
     name: simple-obfs ${{ matrix.arch }}-24.10.4
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
@@ -47,7 +44,7 @@ jobs:
 
       - name: Upload artifacts
         if: always()
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: simple-obfs-${{ matrix.arch }}
           path: |

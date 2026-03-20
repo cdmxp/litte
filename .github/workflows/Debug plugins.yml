@@ -12,15 +12,12 @@ on:
         required: true
         default: 'x86_64'
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     name: debug build ${{ github.event.inputs.arch }}-24.10.4
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
@@ -35,7 +32,7 @@ jobs:
 
       - name: Store packages
         if: always()
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: debug-${{ github.event.inputs.arch }}
           path: |
