@@ -17,7 +17,7 @@ env:
 
 jobs:
   build:
-    name: debug build ${{ github.event.inputs.arch }}-24.10.2
+    name: debug build ${{ github.event.inputs.arch }}-24.10.4
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
@@ -27,7 +27,7 @@ jobs:
       - name: Build (strict)
         uses: kenzok8/gh-action-sdk@hash
         env:
-          ARCH: ${{ github.event.inputs.arch }}-24.10.2
+          ARCH: ${{ github.event.inputs.arch }}-24.10.4
           FEEDNAME: packages_ci
           PACKAGES: ${{ github.event.inputs.plugins }}
           NO_REFRESH_CHECK: true
