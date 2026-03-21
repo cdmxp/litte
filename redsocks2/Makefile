@@ -9,10 +9,11 @@ PKG_NAME:=redsocks2
 PKG_VERSION:=0.73-git20260321
 PKG_RELEASE:=1
 
-PKG_SOURCE:=dd2c95995e0b94819ac50e4a7cb445642a7bef0c.tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/redsocks/tar.gz/
-PKG_HASH:=2f3a6b5b92fd5202f13d1ae700d1dd6b2da7bd875f2d29570fe9e8115c94904a
-PKG_BUILD_DIR:=$(BUILD_DIR)/redsocks-dd2c95995e0b94819ac50e4a7cb445642a7bef0c
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/kenzok8/redsocks.git
+PKG_SOURCE_DATE:=2026-03-21
+PKG_SOURCE_VERSION:=dd2c95995e0b94819ac50e4a7cb445642a7bef0c
+PKG_MIRROR_HASH:=skip
 
 PKG_MAINTAINER:=semigodking <semigodking@gmail.com>
 PKG_LICENSE:=Apache-2.0
