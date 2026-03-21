@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdnsd
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.3.1-git20260321
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/pdnsd/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=28929bfd7874fd86872dc1bf4cd01103d7ebbdad6a457ccd9a8947a2819440be
+PKG_SOURCE:=9ad67a329e2a351726e71c0884479ddc575ca89c.tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/pdnsd/tar.gz/
+PKG_HASH:=e2ba88893a925f2d909638981c190b1cc1dc106a1d485774af25fe43c1f42961
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -53,5 +53,4 @@ define Package/pdnsd-alt/install
 endef
 
 $(eval $(call BuildPackage,pdnsd-alt))
-
 
