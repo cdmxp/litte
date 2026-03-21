@@ -6,14 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redsocks2
-PKG_VERSION:=0.73-git20260321
+PKG_VERSION:=0.73
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/kenzok8/redsocks.git
-PKG_SOURCE_DATE:=2026-03-21
-PKG_SOURCE_VERSION:=dd2c95995e0b94819ac50e4a7cb445642a7bef0c
-PKG_MIRROR_HASH:=1608ac3d80992739f8befa371dd5bbd73d4aa1333f1026869fb439d283273350
+PKG_SOURCE:=redsocks-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/redsocks/tar.gz/release-$(PKG_VERSION)?
+PKG_HASH:=0c9a50b6039cd9fe078a3da5fb5317e38fe52ec59fba7fa9abdf3b002471ebfd
+PKG_BUILD_DIR:=$(BUILD_DIR)/redsocks-release-$(PKG_VERSION)
 
 PKG_MAINTAINER:=semigodking <semigodking@gmail.com>
 PKG_LICENSE:=Apache-2.0
