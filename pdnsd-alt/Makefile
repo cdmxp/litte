@@ -8,9 +8,11 @@ PKG_NAME:=pdnsd
 PKG_VERSION:=1.3.1-git20260321
 PKG_RELEASE:=1
 
-PKG_SOURCE:=9ad67a329e2a351726e71c0884479ddc575ca89c.tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/pdnsd/tar.gz/
-PKG_HASH:=e2ba88893a925f2d909638981c190b1cc1dc106a1d485774af25fe43c1f42961
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/kenzok8/pdnsd.git
+PKG_SOURCE_DATE:=2026-03-21
+PKG_SOURCE_VERSION:=9ad67a329e2a351726e71c0884479ddc575ca89c
+PKG_MIRROR_HASH:=skip
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -53,4 +55,3 @@ define Package/pdnsd-alt/install
 endef
 
 $(eval $(call BuildPackage,pdnsd-alt))
-
