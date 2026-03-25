@@ -24,7 +24,8 @@ endif
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).$(PKG_ARCH)-unknown-linux-$(PKG_LIBC).tar.gz
 PKG_SOURCE_URL:=https://github.com/messense/aliyundrive-webdav/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=auto
+
+PKG_HASH:=skip
 
 include $(INCLUDE_DIR)/package.mk
 
