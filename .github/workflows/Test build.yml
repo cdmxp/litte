@@ -65,7 +65,7 @@ jobs:
           fi
 
       - name: Build
-        uses: kenzok8/gh-action-sdk@main
+        uses: kenzok8/gh-action-sdk@nohash
         env:
           ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}
           FEEDNAME: packages_ci
