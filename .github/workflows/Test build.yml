@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       plugins:
-        description: '输入要编译的插件名，空格分隔'
-        required: true
+        description: '输入要编译的插件名，空格分隔，留空编译全部'
+        required: false
         default: ''
 
 jobs:
@@ -51,12 +51,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Get all packages
+        id: packages
+        run: |
+          if [ -z "${{ github.event.inputs.plugins }}" ] || [ "${{ github.event.inputs.plugins }}" == "*" ]; then
+            # 获取所有包名
+            PACKAGES=$(find . -maxdepth 1 -type d ! -name '.' ! -name '.git' ! -name '.github' -printf '%f ' | sed 's/ $//')
+            echo "编译所有包: $PACKAGES"
+            echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          else
+            echo "编译指定包: ${{ github.event.inputs.plugins }}"
+            echo "packages=${{ github.event.inputs.plugins }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build
         uses: kenzok8/gh-action-sdk@hash
         env:
           ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}
           FEEDNAME: packages_ci
-          PACKAGES: ${{ github.event.inputs.plugins }}
+          PACKAGES: ${{ steps.packages.outputs.packages }}
           NO_REFRESH_CHECK: true
           IGNORE_ERRORS: true
 
@@ -70,10 +83,13 @@ jobs:
         run: |
           tar -zcvf ${{ matrix.arch }}-${{ matrix.sdk }}.tar.gz bin/packages/${{ matrix.arch }}/packages_ci/*.ipk
           echo -e "**文件说明** 🙈:\n" >> release.txt
-          echo -e "1. 支持编译单个或者多个插件\n" >> release.txt
-          echo -e "2. 手动启动编译:${{ github.event.inputs.plugins }}\n" >> release.txt
-          echo -e "3. 使用方法:上传到openwrt设备的tmp目录，输入命令 \`opkg install *.ipk\`\n" >> release.txt
-          echo -e "4. 如果单独安装ssr与依赖，\`rm -rf {*passwall*,*bypass*}\`\n" >> release.txt
+          if [ -z "${{ github.event.inputs.plugins }}" ] || [ "${{ github.event.inputs.plugins }}" == "*" ]; then
+            echo -e "1. 编译所有插件\n" >> release.txt
+          else
+            echo -e "1. 编译指定插件: ${{ github.event.inputs.plugins }}\n" >> release.txt
+          fi
+          echo -e "2. 使用方法:上传到openwrt设备的tmp目录，输入命令 \`opkg install *.ipk\`\n" >> release.txt
+          echo -e "3. 如果单独安装ssr与依赖，\`rm -rf {*passwall*,*bypass*}\`\n" >> release.txt
 
       - name: Upload packages
         uses: ncipollo/release-action@v1.21.0
