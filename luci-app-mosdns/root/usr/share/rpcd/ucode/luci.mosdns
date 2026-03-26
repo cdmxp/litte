@@ -1,0 +1,32 @@
+'use strict';
+
+import { popen } from 'fs';
+
+return {
+	status: {
+		call: function() {
+			const f = popen('pgrep -x mosdns >/dev/null 2>&1; echo $?');
+			if (!f) return { running: false };
+			const code = trim(f.read('all'));
+			f.close();
+			return { running: (code === '0') };
+		}
+	},
+
+	get_log: {
+		call: function() {
+			const f = popen('/usr/share/mosdns/mosdns.sh logfile 2>/dev/null');
+			if (!f) return { log: '' };
+			const logfile = trim(f.read('all'));
+			f.close();
+
+			if (!logfile || !logfile.match('^/')) return { log: '' };
+
+			const lf = popen('cat ' + logfile + ' 2>/dev/null');
+			if (!lf) return { log: '' };
+			const content = lf.read('all');
+			lf.close();
+			return { log: content || '' };
+		}
+	}
+};

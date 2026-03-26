@@ -1,6 +1,7 @@
 local fs   = require "nixio.fs"
 local sys  = require "luci.sys"
 
+local mosdns_version
 if fs.access("/usr/bin/mosdns") then
     mosdns_version = sys.exec("/usr/share/mosdns/mosdns.sh version")
 else

@@ -1,0 +1,44 @@
+{
+	"admin/services/mosdns": {
+		"title": "MosDNS",
+		"order": 30,
+		"action": {
+			"type": "firstchild"
+		},
+		"acl": {
+			"anonymous": false
+		}
+	},
+	"admin/services/mosdns/basic": {
+		"title": "Basic Setting",
+		"order": 1,
+		"action": {
+			"type": "cbi",
+			"path": "mosdns/basic"
+		}
+	},
+	"admin/services/mosdns/rule_list": {
+		"title": "Rule List",
+		"order": 2,
+		"action": {
+			"type": "cbi",
+			"path": "mosdns/rule_list"
+		}
+	},
+	"admin/services/mosdns/update": {
+		"title": "Geodata Update",
+		"order": 3,
+		"action": {
+			"type": "cbi",
+			"path": "mosdns/update"
+		}
+	},
+	"admin/services/mosdns/log": {
+		"title": "Logs",
+		"order": 4,
+		"action": {
+			"type": "cbi",
+			"path": "mosdns/log"
+		}
+	}
+}

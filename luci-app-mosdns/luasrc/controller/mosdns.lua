@@ -9,6 +9,18 @@ function index()
         return
     end
 
+    -- API 路由：供 Lua 模板 XHR 调用，18.06 和 23.05+ 均需要
+    entry({"admin", "services", "mosdns", "status"}, call("act_status")).leaf = true
+    entry({"admin", "services", "mosdns", "get_log"}, call("get_log")).leaf = true
+    entry({"admin", "services", "mosdns", "clear_log"}, call("clear_log")).leaf = true
+    entry({"admin", "services", "mosdns", "geo_update"}, call("geo_update")).leaf = true
+    entry({"admin", "services", "mosdns", "flush_cache"}, call("flush_cache")).leaf = true
+
+    -- luci 23.05+ 已通过 menu.d JSON 注册菜单，无需重复注册
+    if nixio.fs.access("/usr/share/luci/menu.d/luci-app-mosdns.json") then
+        return
+    end
+
     local page = entry({"admin", "services", "mosdns"}, alias("admin", "services", "mosdns", "basic"), _("MosDNS"), 30)
     page.dependent = true
     page.acl_depends = { "luci-app-mosdns" }
@@ -17,11 +29,6 @@ function index()
     entry({"admin", "services", "mosdns", "rule_list"}, cbi("mosdns/rule_list"), _("Rule List"), 2).leaf = true
     entry({"admin", "services", "mosdns", "update"}, cbi("mosdns/update"), _("Geodata Update"), 3).leaf = true
     entry({"admin", "services", "mosdns", "log"}, cbi("mosdns/log"), _("Logs"), 4).leaf = true
-    entry({"admin", "services", "mosdns", "status"}, call("act_status")).leaf = true
-    entry({"admin", "services", "mosdns", "get_log"}, call("get_log")).leaf = true
-    entry({"admin", "services", "mosdns", "clear_log"}, call("clear_log")).leaf = true
-    entry({"admin", "services", "mosdns", "geo_update"}, call("geo_update")).leaf = true
-    entry({"admin", "services", "mosdns", "flush_cache"}, call("flush_cache")).leaf = true
 end
 
 function act_status()
