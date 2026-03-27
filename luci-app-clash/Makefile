@@ -11,7 +11,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=LuCI
 	SUBMENU:=3. Applications
 	TITLE:=LuCI app for clash
-	DEPENDS:=+luci-base +ca-bundle +curl +yq +firewall4 +ip-full +kmod-inet-diag +kmod-nft-socket +kmod-nft-tproxy +kmod-tun +kmod-dummy +bash +coreutils-base64 +coreutils-nohup +wget-ssl +jsonfilter +ipset
+	DEPENDS:=+luci-base +bash +ca-bundle +curl +yq +firewall4 +ip-full +kmod-inet-diag +kmod-nft-socket +kmod-nft-tproxy +kmod-tun +kmod-dummy
 	PKGARCH:=all
 	MAINTAINER:=frainzy1477
 endef
