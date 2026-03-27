@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)
 	SECTION:=luci
 	CATEGORY:=LuCI
-	SUBMENU:=2. Clash For OpenWRT
+	SUBMENU:=3. Applications
 	TITLE:=LuCI app for clash
 	DEPENDS:=+luci-base +bash +coreutils +coreutils-nohup +curl +wget-ssl +jsonfilter +ca-bundle +ipset +kmod-tun
 	PKGARCH:=all
