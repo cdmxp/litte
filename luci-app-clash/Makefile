@@ -184,8 +184,9 @@ define Package/luci-i18n-clash-zh-cn
 	SECTION:=luci
 	CATEGORY:=LuCI
 	TITLE:=luci-app-clash - Simplified Chinese (zh-cn)
-	DEPENDS:=luci-app-clash
-	HIDDEN:=1
+	DEPENDS:=+luci-app-clash
+	PKGARCH:=all
+	DEFAULT:=y if PACKAGE_luci-app-clash
 endef
 
 define Package/luci-i18n-clash-zh-cn/install
