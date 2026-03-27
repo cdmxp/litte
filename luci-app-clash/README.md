@@ -26,6 +26,15 @@
 - `root/usr/share/luci/menu.d/luci-app-clash.json`：luci 23.05+ 菜单注册（`admin/services/clash`）
 - `root/usr/share/rpcd/ucode/luci.clash`：rpcd ucode 后端，提供 version / status / reload / restart / list_profiles / read_log 接口
 
+**维护记录（2026-03）**
+
+- 概览页增强：新增 `Start/Stop`、`Mode`、`Config`、`Dashboard Panel` 实时切换，`Dashboard Host` 统一去除 CIDR 显示
+- 订阅导入精简：`Import Config` 仅保留 `clash` 与 `clash meta` 两种模式，移除 `ssr2clash/v2clash` 旧入口
+- 核心类型统一：`Client` 与 `Update` 页面统一支持 `clash` / `clash meta` / `mihomo`，`Download Online -> Select Core` 默认 `x86_64`
+- 启停与日志健壮性修复：补全 `ping_enable()`，修复 `check/check_geoip` 在日志文件不存在时 500 的问题
+- 菜单与跳转兼容修复：移除 Settings 下 `Game Rules` 菜单项，遗留 `grules` 跳转改为 `settings/other` 防止 404
+- 移动端 UI 整理：统一 Client/Create 页面按钮宽高与配色，减少红色高亮（仅保留告警语义）
+
 ---
 
 ## 兼容性
@@ -58,6 +67,14 @@ make package/luci-app-clash/compile
 编译结果可以在 `bin/packages/your_architecture/base` 内找到。
 
 ## 依赖
+
+### 依赖项目
+
+- [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo)（核心运行时）
+- [MetaCubeX/metacubexd](https://github.com/MetaCubeX/metacubexd)（Dashboard 面板）
+- [haishanh/yacd](https://github.com/haishanh/yacd)（Dashboard 面板）
+- [frainzy1477/luci-app-clash](https://github.com/frainzy1477/luci-app-clash)（历史上游基础）
+- [openwrt/luci](https://github.com/openwrt/luci)（LuCI 框架）
 
 - ca-bundle
 - curl
