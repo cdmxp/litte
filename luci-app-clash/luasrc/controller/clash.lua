@@ -11,7 +11,7 @@ function index()
 		return
 	end
 
-	-- luci 23.05+ 通过 menu.d JSON 注册菜单，此处只保留 API 路由
+	-- luci 24.10+ 通过 menu.d JSON 注册菜单，此处只保留 API 路由
 	local has_menu_d = nixio.fs.access("/usr/share/luci/menu.d/luci-app-clash.json")
 	if not has_menu_d then
 		local page = entry({"admin", "services", "clash"},alias("admin", "services", "clash", "overview"), _("Clash"), 1)
