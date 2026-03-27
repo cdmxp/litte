@@ -11,7 +11,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=LuCI
 	SUBMENU:=3. Applications
 	TITLE:=LuCI app for clash
-	DEPENDS:=+luci-base +bash +ca-bundle +curl +yq +firewall4 +ip-full +kmod-inet-diag +kmod-nft-socket +kmod-nft-tproxy +kmod-tun +kmod-dummy
+	DEPENDS:=+luci-base +bash +coreutils +coreutils-nohup +curl +wget-ssl +jsonfilter +ca-bundle +ipset +kmod-tun
 	PKGARCH:=all
 	MAINTAINER:=frainzy1477
 endef
@@ -167,7 +167,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./luasrc/model/cbi/clash/update/*.lua $(1)/usr/lib/lua/luci/model/cbi/clash/update
 	$(INSTALL_DATA) ./luasrc/view/clash/* $(1)/usr/lib/lua/luci/view/clash
 	
-	# luci 24.10+ JS 视图（htdocs）
+	# luci 23.05+ JS 视图（htdocs）
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/tools
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/clash
 	$(INSTALL_DATA) ./htdocs/luci-static/resources/tools/clash.js $(1)/www/luci-static/resources/tools
@@ -184,8 +184,8 @@ define Package/luci-i18n-clash-zh-cn
 	SECTION:=luci
 	CATEGORY:=LuCI
 	TITLE:=luci-app-clash - Simplified Chinese (zh-cn)
-	DEPENDS:=+luci-app-clash
-	PKGARCH:=all
+	DEPENDS:=luci-app-clash
+	HIDDEN:=1
 endef
 
 define Package/luci-i18n-clash-zh-cn/install
