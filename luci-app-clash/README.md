@@ -70,23 +70,19 @@ make package/luci-app-clash/compile
 
 ### 依赖项目
 
-- [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo)（核心运行时）
-- [MetaCubeX/metacubexd](https://github.com/MetaCubeX/metacubexd)（Dashboard 面板）
-- [haishanh/yacd](https://github.com/haishanh/yacd)（Dashboard 面板）
 - [frainzy1477/luci-app-clash](https://github.com/frainzy1477/luci-app-clash)（历史上游基础）
 - [openwrt/luci](https://github.com/openwrt/luci)（LuCI 框架）
 
 - ca-bundle
 - curl
-- bash
-- coreutils-base64
+- yq
+- firewall4
 - ip-full
 - kmod-inet-diag
 - kmod-nft-socket
 - kmod-nft-tproxy
 - kmod-tun
-- iptables-mod-tproxy
-- ipset
+- kmod-dummy
 
 ## License
 
