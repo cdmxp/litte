@@ -1,6 +1,6 @@
 # luci-app-clash
 
-> OpenWrt 上的 Clash / Clash.Meta / Mihomo 透明代理管理插件，兼容**luci 24.10+**。
+> OpenWrt 上的 Clash / Clash.Meta / Mihomo 透明代理管理插件，同时兼容 **luci 18.06** 与 **luci 24.10+**。
 
 [![license](https://img.shields.io/github/license/kenzok78/luci-app-clash)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/kenzok78/luci-app-clash?style=flat-square)](https://github.com/kenzok78/luci-app-clash/stargazers)
