@@ -5,40 +5,41 @@
 		"action": {
 			"type": "firstchild"
 		},
-		"acl": {
-			"anonymous": false
+		"depends": {
+			"acl": [ "luci-app-mosdns" ],
+			"uci": { "mosdns": true }
 		}
 	},
 	"admin/services/mosdns/basic": {
 		"title": "Basic Setting",
-		"order": 1,
+		"order": 10,
 		"action": {
-			"type": "cbi",
+			"type": "view",
 			"path": "mosdns/basic"
 		}
 	},
-	"admin/services/mosdns/rule_list": {
-		"title": "Rule List",
-		"order": 2,
+	"admin/services/mosdns/rules": {
+		"title": "Rules",
+		"order": 15,
 		"action": {
-			"type": "cbi",
-			"path": "mosdns/rule_list"
+			"type": "view",
+			"path": "mosdns/rules"
 		}
 	},
 	"admin/services/mosdns/update": {
 		"title": "Geodata Update",
-		"order": 3,
+		"order": 20,
 		"action": {
-			"type": "cbi",
+			"type": "view",
 			"path": "mosdns/update"
 		}
 	},
-	"admin/services/mosdns/log": {
+	"admin/services/mosdns/logs": {
 		"title": "Logs",
-		"order": 4,
+		"order": 25,
 		"action": {
-			"type": "cbi",
-			"path": "mosdns/log"
+			"type": "view",
+			"path": "mosdns/logs"
 		}
 	}
 }
