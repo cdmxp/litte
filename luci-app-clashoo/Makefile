@@ -12,7 +12,7 @@ define Package/luci-app-clashoo
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=LuCI app for Clashoo
-  DEPENDS:=+luci-base +clashoo-runtime +clashoo
+  DEPENDS:=+luci-base +clashoo-runtime
   PKGARCH:=all
   MAINTAINER:=kenzok8
 endef
