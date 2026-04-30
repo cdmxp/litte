@@ -1,67 +1,114 @@
-## 访问数：[![](https://visitor-badge.glitch.me/badge?page_id=sirpdboy-visitor-badge)] [![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
+# luci-app-advanced
 
-    
-![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/说明1.jpg)
+[![license](https://img.shields.io/badge/license-Apache2-brightgreen.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/kenzok78/luci-app-advanced/pulls)
+[![Lastest Release](https://img.shields.io/github/release/sirpdboy/luci-app-advanced.svg?style=flat)](https://github.com/kenzok78/luci-app-advanced/releases)
 
+LuCI 高级设置插件，提供系统配置、网络设置、防火墙等功能的管理界面。
 
-<h1 align="center">
-  <br>luci-app-advanced<br>
-</h1>
+<small>
 
-<p align="center">
-<a href="https://openwrt.org"><img alt="OpenWrt" src="https://img.shields.io/badge/OpenWrt-%E2%89%A518.06-ff0000?logo=openwrt&logoColor=white"></a>
-<a href="https://www.google.com/chrome/"><img alt="Chrome" src="https://img.shields.io/badge/Chrome-%E2%89%A5111-4285F3?logo=googlechrome&logoColor=white"></a>
-<a href="https://www.apple.com/safari/"><img alt="Safari" src="https://img.shields.io/badge/Safari-%E2%89%A516.4-000000?logo=safari&logoColor=white"></a>
-<a href="https://www.mozilla.org/firefox/"><img alt="Firefox" src="https://img.shields.io/badge/Firefox-%E2%89%A5128-FF7138?logo=firefoxbrowser&logoColor=white"></a>
-<a target="_blank" href="https://github.com/sirpdboy/luci-app-advanced/releases"> <img alt="GitHub release" src="https://img.shields.io/github/v/release/sirpdboy/luci-app-advanced"></a>
-<a href="https://github.com/sirpdboy/luci-app-advanced/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/sirpdboy/luci-app-advanced/total"></a>
-</p>
+## 功能特性
 
-luci-app-advanced 高级设置，包括smartdns，openclash，防火墙，DHCP等。
+- 系统高级设置
+- 网络配置管理
+- 防火墙规则配置
+- DHCP 设置
+- 文件浏览器
+- 文件管理器
 
-![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/说明2.jpg)
+## 系统要求
 
+- OpenWrt 23.* 或更高版本
+- LuCI 23.* + Web 界面
 
+## 安装
 
-## 使用与授权相关说明
- 
-- 本人开源的所有源码，任何引用需注明本处出处，如需修改二次发布必告之本人，未经许可不得做于任何商用用途。
+### 从源码编译
 
+```bash
+git clone https://github.com/kenzok78/luci-app-advanced.git
+mv luci-app-advanced /path/to/openwrt/package/feeds/luci/
+make package/luci-app-advanced/compile V=99
+```
 
-# My other project
+### 在线安装
 
-- 网络速度测试 ：https://github.com/sirpdboy/NetSpeedTest
+```bash
+opkg update
+opkg install luci-app-advanced
+```
 
-- 定时设置插件 : https://github.com/sirpdboy/luci-app-autotimeset
+## 配置
 
-- 关机功能插件 : https://github.com/sirpdboy/luci-app-poweroffdevice
+1. 登录 LuCI 管理界面
+2. 进入 **系统 → 高级设置**
+3. 根据需要进行配置
+4. 保存并应用
 
-- opentopd主题 : https://github.com/sirpdboy/luci-theme-opentopd
+## 代码优化
 
-- kucat 主题: https://github.com/sirpdboy/luci-theme-kucat
+### 修复的问题
 
-- 家长控制: https://github.com/sirpdboy/luci-theme-parentcontrol
+- uci-defaults 脚本：添加文件存在性检查，避免文件不存在时报错
 
-- 系统高级设置 : https://github.com/sirpdboy/luci-app-advanced
+## 目录结构
 
-- ddns-go动态域名: https://github.com/sirpdboy/luci-app-ddns-go
+```
+luci-app-advanced/
+├── htdocs/
+│   └── luci-static/
+│       └── resources/
+│           └── fileassistant/
+│               ├── fb.js
+│               ├── fb.css
+│               ├── folder-icon.png
+│               ├── file-icon.png
+│               └── link-icon.png
+├── luasrc/
+│   ├── controller/
+│   │   ├── advanced.lua
+│   │   └── fileassistant.lua
+│   ├── model/
+│   │   └── cbi/
+│   │       └── advanced.lua
+│   └── view/
+│       ├── filebrowser.htm
+│       └── fileassistant.htm
+├── root/
+│   ├── bin/
+│   │   ├── normalmode
+│   │   ├── nuc
+│   │   ├── ipmode4
+│   │   └── ipmode6
+│   ├── etc/
+│   │   ├── config/
+│   │   │   └── advanced
+│   │   └── uci-defaults/
+│   │       └── 40_luci-fb
+│   └── usr/
+│       └── share/
+│           └── rpcd/
+│               └── acl.d/
+│                   └── luci-app-advanced.json
+├── Makefile
+└── README.md
+```
 
-- 进阶设置（系统高级设置+主题设置kucat/agron/opentopd）: https://github.com/sirpdboy/luci-app-advancedplus
+## 许可证
 
-- 设置向导: https://github.com/sirpdboy/luci-app-wizard
+Apache License 2.0
 
-- 分区扩容: https://github.com/sirpdboy/luci-app-partexp
+## 致谢
 
-- lukcy大吉: https://github.com/sirpdboy/luci-app-lukcy
+- 原始项目：[sirpdboy/luci-app-advanced](https://github.com/sirpdboy/luci-app-advanced)
 
-## 捐助
+## 更新日志
 
-![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/说明3.jpg)
+### v1.20 (2026-03-24)
 
-|     <img src="https://img.shields.io/badge/-支付宝-F5F5F5.svg" href="#赞助支持本项目-" height="25" alt="图飞了😂"/>  |  <img src="https://img.shields.io/badge/-微信-F5F5F5.svg" height="25" alt="图飞了😂" href="#赞助支持本项目-"/>  | 
-| :-----------------: | :-------------: |
-|![xm1](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/支付宝.png) | ![xm1](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/微信.png) |
+- 标准化代码结构
+- 修复 uci-defaults 脚本
+- 添加中文 README
 
-<a href="#readme">
-    <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="图飞了😂" title="返回顶部" align="right"/>
-</a>
+</small>

@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       plugins:
-        description: '输入要编译的插件名，空格分隔'
-        required: true
+        description: '输入: 留空=全部, 1=最近1天更新, 2=最近2天更新, 或插件名(空格分隔)'
+        required: false
         default: ''
 
 jobs:
@@ -26,12 +26,42 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Get packages to build
+        id: packages
+        run: |
+          input="${{ github.event.inputs.plugins }}"
+          
+          if [ -z "$input" ] || [ "$input" == "*" ]; then
+            # 编译所有包
+            PACKAGES=$(find . -maxdepth 1 -type d ! -name '.' ! -name '.git' ! -name '.github' -printf '%f ' | sed 's/ $//')
+            echo "编译所有包: $PACKAGES"
+            echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          elif [ "$input" == "1" ]; then
+            # 最近1天有更新的包
+            SINCE_DAYS=1
+            echo "编译最近 $SINCE_DAYS 天更新的包..."
+            PACKAGES=$(git log --since="${SINCE_DAYS} days ago" --name-only --pretty=format: | grep -v '^$' | awk -F'/' '{print $1}' | sort -u | grep -v '^\.\|^$' | tr '\n' ' ' | sed 's/ $//')
+            echo "最近1天更新的包: $PACKAGES"
+            echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          elif [ "$input" == "2" ]; then
+            # 最近2天有更新的包
+            SINCE_DAYS=2
+            echo "编译最近 $SINCE_DAYS 天更新的包..."
+            PACKAGES=$(git log --since="${SINCE_DAYS} days ago" --name-only --pretty=format: | grep -v '^$' | awk -F'/' '{print $1}' | sort -u | grep -v '^\.\|^$' | tr '\n' ' ' | sed 's/ $//')
+            echo "最近2天更新的包: $PACKAGES"
+            echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          else
+            # 编译指定包
+            echo "编译指定包: $input"
+            echo "packages=$input" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build
         uses: kenzok8/gh-action-sdk@hash
         env:
           ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}
           FEEDNAME: packages_ci
-          PACKAGES: ${{ github.event.inputs.plugins }}
+          PACKAGES: ${{ steps.packages.outputs.packages }}
           NO_REFRESH_CHECK: true
           IGNORE_ERRORS: true
 

@@ -82,7 +82,7 @@ const listen_interfaces = uci.get(uciconf, uciroute, 'listen_interfaces') || nul
       lan_proxy_mac_addrs = uci.get(uciconf, uciroute, 'lan_proxy_mac_addrs') || null,
       proxy_router = (uci.get(uciconf, uciroute, 'proxy_router') === '0') ? null : true,
       top_upstream = (uci.get(uciconf, uciroute, 'top_upstream') === '1') || null,
-      client_enabled = uci.get(uciconf, uciroute, 'client_enabled' === '1') || null,
+      client_enabled = (uci.get(uciconf, uciroute, 'client_enabled') === '1') || null,
       routing_tcpport = uci.get(uciconf, uciroute, 'routing_tcpport') || [],
       routing_udpport = uci.get(uciconf, uciroute, 'routing_udpport') || [],
       routing_mode = uci.get(uciconf, uciroute, 'routing_mode') || null,
@@ -239,8 +239,8 @@ config["etag-support"] = (uci.get(uciconf, uciglobal, 'etag_support') === '0') ?
 config.ipv6 = (uci.get(uciconf, uciglobal, 'ipv6') === '0') ? false : true;
 config["unified-delay"] = strToBool(uci.get(uciconf, uciglobal, 'unified_delay')) || false;
 config["tcp-concurrent"] = strToBool(uci.get(uciconf, uciglobal, 'tcp_concurrent')) || false;
-config["keep-alive-interval"] = durationToSecond(uci.get(uciconf, uciglobal, 'keep_alive_interval')) || 30;
-config["keep-alive-idle"] = durationToSecond(uci.get(uciconf, uciglobal, 'keep_alive_idle')) || 600;
+config["keep-alive-interval"] = durationToSecond(uci.get(uciconf, uciglobal, 'keep_alive_interval')) ?? 30;
+config["keep-alive-idle"] = durationToSecond(uci.get(uciconf, uciglobal, 'keep_alive_idle')) ?? 600;
 /* ACL settings */
 config["interface-name"] = bind_interface;
 config["routing-mark"] = self_mark;
@@ -506,7 +506,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 
 		/* Hysteria / Hysteria2 */
 		ports: isEmpty(cfg.hysteria_ports) ? null : join(',', cfg.hysteria_ports),
-		"hop-interval": strToInt(cfg.hysteria_hop_interval),
+		"hop-interval": strToInt(cfg.hysteria_hop_interval), // @DEBUG ERROR data type *utils.IntRanges[uint16]
 		up: cfg.hysteria_up_mbps ? cfg.hysteria_up_mbps + ' Mbps' : null,
 		down: cfg.hysteria_down_mbps ? cfg.hysteria_down_mbps + ' Mbps' : null,
 		obfs: cfg.hysteria_obfs_type,
@@ -540,7 +540,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 				mode: cfg.sudoku_http_mask_mode,
 				tls: strToBool(cfg.sudoku_http_mask_tls) || false,
 				host: cfg.sudoku_http_mask_host,
-				path_root: cfg.sudoku_path_root,
+				"path-root": cfg.sudoku_path_root,
 				multiplex: cfg.sudoku_http_mask_multiplex,
 			}
 		} : {}),
@@ -586,7 +586,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		encryption: cfg.vless_encryption === '1' ? cfg.vless_encryption_encryption : null,
 
 		/* TrustTunnel */
-		"health-check": strToBool(cfg.trusttunnel_health_check === '0' ? false : true),
+		"health-check": cfg.trusttunnel_health_check === '0' ? false : true,
 		quic: strToBool(cfg.trusttunnel_quic),
 
 		/* WireGuard */
@@ -608,6 +608,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 
 		/* Extra fields */
 		"congestion-controller": cfg.congestion_controller,
+		"bbr-profile": cfg.bbr_profile,
 		udp: strToBool(cfg.udp),
 		"udp-over-tcp": strToBool(cfg.uot),
 		"udp-over-tcp-version": cfg.uot_version,
@@ -648,7 +649,11 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			} : null,
 			"grpc-opts": cfg.transport_type === 'grpc' ? {
 				"grpc-service-name": cfg.transport_grpc_servicename,
-				"grpc-user-agent": cfg.transport_grpc_user_agent
+				"grpc-user-agent": cfg.transport_grpc_user_agent,
+				"ping-interval": strToInt(cfg.transport_grpc_ping_interval) || null,
+				"max-connections": strToInt(cfg.smux_max_connections) || null,
+				"min-streams": strToInt(cfg.smux_min_streams) || null,
+				"max-streams": strToInt(cfg.smux_max_streams) || null,
 			} : null,
 			"ws-opts": cfg.transport_type === 'ws' ? {
 				path: cfg.transport_path || '/',
@@ -657,10 +662,34 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 				"early-data-header-name": cfg.transport_ws_early_data_header,
 				"v2ray-http-upgrade": strToBool(cfg.transport_ws_v2ray_http_upgrade),
 				"v2ray-http-upgrade-fast-open": strToBool(cfg.transport_ws_v2ray_http_upgrade_fast_open)
+			} : null,
+			"xhttp-opts": cfg.transport_type === 'xhttp' ? {
+				host: cfg.transport_host,
+				path: cfg.transport_path || '/',
+				headers: cfg.transport_http_headers ? json(cfg.transport_http_headers) : null,
+				mode: cfg.transport_xhttp_mode,
+				"no-grpc-header": strToBool(cfg.transport_xhttp_no_grpc_header),
+				"x-padding-bytes": cfg.transport_xhttp_x_padding_bytes,
+				// @bypassing CDN's potential detection /* https://github.com/MetaCubeX/mihomo/commit/2337d70d86fa15efe7b69ee54bff6139ebfabcf6 */
+				"sc-max-each-post-bytes": strToInt(cfg.transport_xhttp_sc_max_each_post_bytes) || null,
+				"sc-min-posts-interval-ms": strToInt(cfg.transport_xhttp_sc_min_posts_interval_ms) || null,
+				"reuse-settings": cfg.transport_xhttp_xmux ? {
+					"max-concurrency": cfg.transport_xhttp_xmux_max_concurrency,
+					"max-connections": cfg.transport_xhttp_xmux_max_connections,
+					"c-max-reuse-times": cfg.transport_xhttp_xmux_max_reuse_times,
+					"h-max-request-times": cfg.transport_xhttp_xmux_max_request_times,
+					"h-max-reusable-secs": cfg.transport_xhttp_xmux_max_reusable_secs,
+					"h-keep-alive-period": strToInt(cfg.transport_xhttp_xmux_keep_alive_period)
+				} : null
 			} : null
 		} : {}),
 
 		/* Multiplex fields */
+		...(cfg.type in ['trusttunnel'] ? {
+			"max-connections": strToInt(cfg.smux_max_connections) || null,
+			"min-streams": strToInt(cfg.smux_min_streams) || null,
+			"max-streams": strToInt(cfg.smux_max_streams) || null
+		} : {}),
 		smux: cfg.smux_enabled === '1' ? {
 			enabled: true,
 			protocol: cfg.smux_protocol,
@@ -757,11 +786,11 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 				// Configuration Items
 				tfo: strToBool(cfg.override_tfo),
 				mptcp: strToBool(cfg.override_mptcp),
-				udp: (cfg.override_udp === '0') ? false : true,
+				udp: (cfg.override_udp === '0') ? null : true,
 				"udp-over-tcp": strToBool(cfg.override_uot),
 				up: cfg.override_up ? cfg.override_up + ' Mbps' : null,
 				down: cfg.override_down ? cfg.override_down + ' Mbps' : null,
-				"skip-cert-verify": strToBool(cfg.override_skip_cert_verify) || false,
+				"skip-cert-verify": cfg.override_skip_cert_verify ? strToBool(cfg.override_skip_cert_verify) || false : null,
 				"dialer-proxy": dialerproxy[cfg['.name']]?.detour,
 				"interface-name": cfg.override_interface_name,
 				"routing-mark": strToInt(cfg.override_routing_mark) || null,

@@ -235,6 +235,11 @@ function renderListeners(s, uciconfig, isClient) {
 	o.depends('type', 'mieru');
 	o.modalonly = true;
 
+	o = s.taboption('field_general', form.Flag, 'mieru_user_hint_is_mandatory', _('User-hint is mandatory'),);
+	o.default = o.disabled;
+	o.depends('type', 'mieru');
+	o.modalonly = true;
+
 	o = s.taboption('field_general', form.Value, 'mieru_traffic_pattern', _('Traffic pattern'),
 		_('A base64 string is used to fine-tune network behavior.<br/>Please refer to the <a target="_blank" href="%s" rel="noreferrer noopener">document</a>.')
 		.format('https://github.com/enfein/mieru/blob/main/docs/traffic-pattern.md'));
@@ -320,12 +325,15 @@ function renderListeners(s, uciconfig, isClient) {
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.ListValue, 'sudoku_table_type', _('Obfuscate type'));
-	o.value('prefer_ascii', _('Obfuscated as ASCII data stream'));
-	o.value('prefer_entropy', _('Obfuscated as low-entropy data stream'));
+	o.value('prefer_ascii', _('Obfuscated as %s').format(_('ASCII data stream')));
+	o.value('prefer_entropy', _('Obfuscated as %s').format(_('Low-entropy data stream')));
+	o.value('up_ascii_down_entropy', _('UP: %s; DOWN: %s').format(_('ASCII data stream'), _('Low-entropy data stream')));
+	o.value('up_entropy_down_ascii', _('UP: %s; DOWN: %s').format(_('Low-entropy data stream'), _('ASCII data stream')));
 	o.depends('type', 'sudoku');
 	o.modalonly = true;
 
-	o = s.taboption('field_general', form.DynamicList, 'sudoku_custom_tables', _('Custom byte layout'));
+	o = s.taboption('field_general', form.DynamicList, 'sudoku_custom_tables', _('Custom byte layout'),
+			_('Only applies to the %s.').format(_('Low-entropy data stream')));
 	o.renderWidget = function(/* ... */) {
 		let node = form.DynamicList.prototype.renderWidget.apply(this, arguments);
 
@@ -338,7 +346,7 @@ function renderListeners(s, uciconfig, isClient) {
 		return node;
 	}
 	o.validate = hm.validateSudokuCustomTable;
-	o.depends('sudoku_table_type', 'prefer_entropy');
+	o.depends({sudoku_table_type: /^(prefer_entropy|up_ascii_down_entropy|up_entropy_down_ascii)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.Value, 'sudoku_padding_min', _('Minimum padding rate'));
@@ -540,6 +548,15 @@ function renderListeners(s, uciconfig, isClient) {
 		o.value.apply(o, res);
 	})
 	o.depends({type: /^(tuic|trusttunnel)$/});
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.ListValue, 'bbr_profile', _('BBR profile'));
+	o.default = hm.bbr_profiles[0][0];
+	hm.bbr_profiles.forEach((res) => {
+		o.value.apply(o, res);
+	})
+	o.depends({congestion_controller: 'bbr'});
+	o.depends({type: 'hysteria2'});
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.MultiValue, 'network', _('Network type'));
@@ -964,18 +981,18 @@ function renderListeners(s, uciconfig, isClient) {
 	o = s.taboption('field_transport', form.ListValue, 'transport_type', _('Transport type'));
 	o.value('grpc', _('gRPC'));
 	o.value('ws', _('WebSocket'));
+	o.value('xhttp', _('XHTTP'));
 	o.validate = function(section_id, value) {
 		const type = this.section.getOption('type').formvalue(section_id);
 
 		switch (type) {
-			case 'vmess':
 			case 'vless':
-				if (!['http', 'h2', 'grpc', 'ws'].includes(value))
-					return _('Expecting: only support %s.').format(_('HTTP') +
-						' / ' + _('HTTPUpgrade') +
-						' / ' + _('gRPC') +
-						' / ' + _('WebSocket'));
+				if (!['grpc', 'ws', 'xhttp'].includes(value))
+					return _('Expecting: only support %s.').format(_('gRPC') +
+						' / ' + _('WebSocket') +
+						' / ' + _('XHTTP'));
 				break;
+			case 'vmess':
 			case 'trojan':
 				if (!['grpc', 'ws'].includes(value))
 					return _('Expecting: only support %s.').format(_('gRPC') +
@@ -990,17 +1007,53 @@ function renderListeners(s, uciconfig, isClient) {
 	o.depends('transport_enabled', '1');
 	o.modalonly = true;
 
+	o = s.taboption('field_transport', form.Value, 'transport_host', _('Server hostname'));
+	o.datatype = 'hostname';
+	o.placeholder = 'example.com';
+	o.depends({transport_enabled: '1', transport_type: 'xhttp'});
+	o.modalonly = true;
+
 	o = s.taboption('field_transport', form.Value, 'transport_path', _('Request path'));
 	o.placeholder = '/';
 	o.default = '/';
 	o.rmempty = false;
-	o.depends({transport_enabled: '1', transport_type: 'ws'});
+	o.depends({transport_enabled: '1', transport_type: /^(ws|xhttp)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_transport', form.Value, 'transport_grpc_servicename', _('gRPC service name'));
 	o.placeholder = 'GunService';
 	o.rmempty = false;
 	o.depends({transport_enabled: '1', transport_type: 'grpc'});
+	o.modalonly = true;
+
+	o = s.taboption('field_transport', form.ListValue, 'transport_xhttp_mode', _('XHTTP mode'));
+	o.value('auto', _('Auto'));
+	o.value('stream-one', _('stream-one'));
+	o.value('stream-up', _('stream-up'));
+	o.value('packet-up', _('packet-up'));
+	o.depends({transport_enabled: '1', transport_type: 'xhttp'});
+	o.modalonly = true;
+
+	o = s.taboption('field_transport', form.Flag, 'transport_xhttp_no_sse_header', _('No SSE header'));
+	o.default = o.disabled;
+	o.depends({transport_enabled: '1', transport_type: 'xhttp'});
+	o.modalonly = true;
+
+	o = s.taboption('field_transport', form.Value, 'transport_xhttp_sc_max_buffered_posts', _('Max buffered posts'));
+	o.datatype = 'uinteger';
+	o.placeholder = '30';
+	o.depends({transport_enabled: '1', transport_type: 'xhttp'});
+	o.modalonly = true;
+
+	o = s.taboption('field_transport', form.Value, 'transport_xhttp_sc_stream_up_server_secs', _('stream-up server seconds'));
+	o.placeholder = '20-80';
+	o.depends({transport_enabled: '1', transport_type: 'xhttp'});
+	o.modalonly = true;
+
+	o = s.taboption('field_transport', form.Value, 'transport_xhttp_sc_max_each_post_bytes', _('Max each POST bytes'));
+	o.datatype = 'uinteger';
+	o.placeholder = '1000000';
+	o.depends({transport_enabled: '1', transport_type: 'xhttp'});
 	o.modalonly = true;
 }
 
