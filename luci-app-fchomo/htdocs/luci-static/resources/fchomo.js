@@ -2,13 +2,17 @@
 'require baseclass';
 'require form';
 'require fs';
+'require dom';
 'require rpc';
 'require uci';
 'require ui';
 'require validation';
 
 /* Member */
-const rulesetdoc = 'data:text/html;base64,' + 'cmxzdHBsYWNlaG9sZGVy';
+const rulesetdoc = [
+	'data:text/html;base64,',
+'H4sIAAAAAAAAAyvKKS4pyElMTs3Iz0lJLQIA8fIyYQ8AAAA='
+];
 
 const sharkaudio = function() {
 	return 'data:audio/x-wav;base64,' +
@@ -50,6 +54,13 @@ const congestion_controller = [
 	['cubic', _('cubic')],
 	['new_reno', _('new_reno')],
 	['bbr', _('bbr')],
+];
+
+const bbr_profiles = [
+	['', _('Keep default')],
+	['standard', _('Standard')],
+	['conservative', _('Conservative')],
+	['aggressive', _('Aggressive')],
 ];
 
 const stunserver = [
@@ -108,7 +119,7 @@ const glossary = {
 		prefmt: '%s_nodedomain',
 		field: 'proxy-server-nameserver-policy',
 	},
-	node: {
+	node: { // outbound
 		prefmt: 'node_%s',
 		field: 'proxies',
 	},
@@ -146,12 +157,15 @@ const inbound_type = [
 	['shadowsocks', _('Shadowsocks') + ' - ' + _('TCP/UDP')],
 	['mieru', _('Mieru') + ' - ' + _('TCP/UDP')],
 	['sudoku', _('Sudoku') + ' - ' + _('TCP')],
+	['snell', _('Snell') + ' - ' + _('TCP')],
 	['vmess', _('VMess') + ' - ' + _('TCP')],
 	['vless', _('VLESS') + ' - ' + _('TCP')],
 	['trojan', _('Trojan') + ' - ' + _('TCP')],
 	['anytls', _('AnyTLS') + ' - ' + _('TCP')],
 	['tuic', _('TUIC') + ' - ' + _('UDP')],
 	['hysteria2', _('Hysteria2') + ' - ' + _('UDP')],
+	['hysteria2-realm', _('Hysteria2 Realm Server') + ' - ' + _('TCP/UDP')],
+	['shadowquic', _('ShadowQUIC') + ' - ' + _('UDP')],
 	['trusttunnel', _('TrustTunnel') + ' - ' + _('TCP/UDP')],
 	['tunnel', _('Tunnel') + ' - ' + _('TCP/UDP')]
 ];
@@ -172,6 +186,7 @@ const load_balance_strategy = [
 ];
 
 const outbound_type = [
+	['rematch', _('Rematch'), _('Rematching routing rules')],
 	['direct', _('DIRECT') + ' - ' + _('TCP/UDP')],
 	['http', _('HTTP') + ' - ' + _('TCP')],
 	['socks5', _('SOCKS5') + ' - ' + _('TCP/UDP')],
@@ -184,23 +199,35 @@ const outbound_type = [
 	['vless', _('VLESS') + ' - ' + _('TCP')],
 	['trojan', _('Trojan') + ' - ' + _('TCP')],
 	['anytls', _('AnyTLS') + ' - ' + _('TCP')],
+	['tuic', _('TUIC') + ' - ' + _('UDP')],
 	//['hysteria', _('Hysteria') + ' - ' + _('UDP')],
 	['hysteria2', _('Hysteria2') + ' - ' + _('UDP')],
-	['tuic', _('TUIC') + ' - ' + _('UDP')],
-	['masque', _('Masque') + ' - ' + _('UDP')], // https://blog.cloudflare.com/post-quantum-warp/
+	['shadowquic', _('ShadowQUIC') + ' - ' + _('UDP')],
 	['trusttunnel', _('TrustTunnel') + ' - ' + _('TCP/UDP')],
-	['wireguard', _('WireGuard') + ' - ' + _('UDP')],
+	['zerotier', _('ZeroTier') + ' - ' + _('UDP') + ' - ' + _('L2')], // Endpoint
+	['wireguard', _('WireGuard') + ' - ' + _('UDP')], // Endpoint
+	['tailscale', _('Tailscale') + ' - ' + _('UDP')], // Endpoint
+	['masque', _('Masque') + ' - ' + _('UDP')], // Endpoint // https://blog.cloudflare.com/post-quantum-warp/
 	['ssh', _('SSH') + ' - ' + _('TCP')]
 ];
 
 const preset_outbound = {
 	full: [
+		['DIRECT'],      // built-in Outbound
+		['REJECT'],      // built-in Outbound
+		['REJECT-DROP'], // built-in Outbound
+		['PASS'],        // built-in Outbound
+		['PASS-RULE'],   // built-in Outbound
+		['COMPATIBLE'],  // built-in Outbound
+		['GLOBAL']       // built-in Proxy Group
+	],
+	proxy: [ // built-in Outbound
 		['DIRECT'],
 		['REJECT'],
 		['REJECT-DROP'],
 		['PASS'],
-		['COMPATIBLE'],
-		['GLOBAL']
+		['PASS-RULE'],
+		['COMPATIBLE']
 	],
 	direct: [
 		['', _('null')],
@@ -219,7 +246,6 @@ const proxy_group_type = [
 	['fallback', _('Fallback')],
 	['url-test', _('URL test')],
 	['load-balance', _('Load balance')],
-	//['relay', _('Relay')], // Deprecated
 ];
 
 const routing_port_type = [
@@ -260,6 +286,7 @@ const rules_type = [
 	//['IN-TYPE'],
 	//['IN-USER'],
 	//['IN-NAME'],
+	['REMATCH-NAME'],
 
 	['PROCESS-PATH'],
 	['PROCESS-PATH-REGEX'],
@@ -279,7 +306,7 @@ const rules_type = [
 
 const rules_type_allowparms = [
 	// params only available for types other than
-	// https://github.com/muink/mihomo/blob/300eb8b12a75504c4bd4a6037d2f6503fd3b347f/rules/parser.go#L12
+	// https://github.com/muink/mihomo/blob/ea19cda0c9b666aa0fc1b0412ae6fbc0ea9d44e0/rules/parser.go#L12
 	'GEOIP',
 	'IP-ASN',
 	'IP-CIDR',
@@ -465,6 +492,31 @@ const CBIDynamicList = form.DynamicList.extend({ // @less_25_12
 			datatype: this.datatype,
 			placeholder: this.placeholder,
 			validate: L.bind(this.validate, this, section_id),
+			disabled: (this.readonly != null) ? this.readonly : this.map.readonly
+		});
+
+		return widget.render();
+	}
+});
+
+const CBIMultiValue = form.MultiValue.extend({ // @pr8758_merged
+	__name__: 'CBI.MultiValue',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		const value = (cfgvalue != null) ? cfgvalue : this.default;
+		const choices = this.transformChoices();
+
+		const widget = new UIDropdown(L.toArray(value), choices, {
+			id: this.cbid(section_id),
+			sort: this.keylist,
+			multiple: true,
+			keep_order: this.keep_order,
+			optional: this.optional || this.rmempty,
+			select_placeholder: this.placeholder,
+			create: this.create,
+			display_items: this.display_size ?? this.size ?? 3,
+			dropdown_items: this.dropdown_size ?? this.size ?? -1,
+			validate: this.getValidator(section_id),
 			disabled: (this.readonly != null) ? this.readonly : this.map.readonly
 		});
 
@@ -763,6 +815,360 @@ const UIDynamicList = ui.DynamicList.extend({ // @less_25_12
 	}
 });
 
+// keep selected order for multiple selection
+const UIDropdown = ui.Dropdown.extend({ // @pr8758_merged
+	__init__(value, choices, options) {
+		if (typeof(choices) != 'object')
+			choices = {};
+
+		if (!Array.isArray(value))
+			this.values = (value != null && value != '') ? [ value ] : [];
+		else
+			this.values = value;
+
+		this.orderCounter = this.values.length;
+		this.choices = choices;
+		this.options = Object.assign({
+			sort:               true,
+			multiple:           Array.isArray(value),
+			keep_order:         false,
+			optional:           true,
+			select_placeholder: _('-- Please choose --'),
+			custom_placeholder: _('-- custom --'),
+			display_items:      3,
+			dropdown_items:     -1,
+			create:             false,
+			create_query:       '.create-item-input',
+			create_template:    'script[type="item-template"]'
+		}, options);
+	},
+
+	render() {
+		const sb = E('div', {
+			'id': this.options.id,
+			'class': 'cbi-dropdown',
+			'multiple': this.options.multiple ? '' : null,
+			'keep_order': this.options.keep_order ? '' : null,
+			'optional': this.options.optional ? '' : null,
+			'disabled': this.options.disabled ? '' : null,
+			'tabindex': -1
+		}, E('ul'));
+
+		let keys = Object.keys(this.choices);
+
+		if (this.options.sort === true)
+			keys.sort(L.naturalCompare);
+		else if (Array.isArray(this.options.sort))
+			keys = this.options.sort;
+
+		if (this.options.create)
+			for (let i = 0; i < this.values.length; i++)
+				if (!this.choices.hasOwnProperty(this.values[i]))
+					keys.push(this.values[i]);
+
+		for (let i = 0; i < keys.length; i++) {
+			let label = this.choices[keys[i]];
+
+			if (dom.elem(label))
+				label = label.cloneNode(true);
+
+			sb.lastElementChild.appendChild(E('li', {
+				'data-value': keys[i],
+				'selected': (this.values.indexOf(keys[i]) > -1) ? '' : null
+			}, [ label ?? keys[i] ]));
+		}
+
+		if (this.options.create) {
+			const createEl = E('input', {
+				'type': 'text',
+				'class': 'create-item-input',
+				'readonly': this.options.readonly ? '' : null,
+				'maxlength': this.options.maxlength,
+				'placeholder': this.options.custom_placeholder ?? this.options.placeholder,
+				'inputmode': 'text',
+				'enterkeyhint': 'done'
+			});
+
+			if (this.options.datatype || this.options.validate)
+				UI.prototype.addValidator(createEl, this.options.datatype ?? 'string',
+				                          true, this.options.validate, 'blur', 'keyup');
+
+			sb.lastElementChild.appendChild(E('li', { 'data-value': '-' }, createEl));
+		}
+
+		if (this.options.create_markup)
+			sb.appendChild(E('script', { type: 'item-template' },
+				this.options.create_markup));
+
+		return this.bind(sb);
+	},
+
+	bind(sb) {
+		const o = this.options;
+
+		o.multiple = sb.hasAttribute('multiple');
+		o.keep_order = sb.hasAttribute('keep_order');
+		o.optional = sb.hasAttribute('optional');
+		o.placeholder = sb.getAttribute('placeholder') ?? o.placeholder;
+		o.display_items = parseInt(sb.getAttribute('display-items') ?? o.display_items);
+		o.dropdown_items = parseInt(sb.getAttribute('dropdown-items') ?? o.dropdown_items);
+		o.create_query = sb.getAttribute('item-create') ?? o.create_query;
+		o.create_template = sb.getAttribute('item-template') ?? o.create_template;
+
+		const ul = sb.querySelector('ul');
+		const more = sb.appendChild(E('span', { class: 'more', tabindex: -1 }, '···'));
+		sb.appendChild(E('span', { class: 'open', tabindex: -1 }, '▾'));
+		const canary = sb.appendChild(E('div'));
+		const create = sb.querySelector(this.options.create_query);
+		let ndisplay = this.options.display_items;
+		let n = 0;
+
+		if (this.options.multiple) {
+			let items = ul.querySelectorAll('li');
+
+			for (let i = 0; i < items.length; i++) {
+				this.transformItem(sb, items[i]);
+
+				if (items[i].hasAttribute('selected')) {
+					if (ndisplay-- > 0)
+						items[i].setAttribute('display', n++);
+
+					if (this.options.keep_order) {
+						const value = items[i].getAttribute('data-value');
+						if (this.values.includes(value))
+							items[i].setAttribute('data-order', this.values.indexOf(value) + 1);
+					}
+				}
+			}
+		}
+		else {
+			if (this.options.optional && !ul.querySelector('li[data-value=""]')) {
+				const placeholder = E('li', { placeholder: '' },
+					this.options.select_placeholder ?? this.options.placeholder);
+
+				ul.firstChild
+					? ul.insertBefore(placeholder, ul.firstChild)
+					: ul.appendChild(placeholder);
+			}
+
+			let items = ul.querySelectorAll('li');
+			const sel = sb.querySelectorAll('[selected]');
+
+			sel.forEach(s => {
+				s.removeAttribute('selected');
+			});
+
+			const s = sel[0] ?? items[0];
+			if (s) {
+				s.setAttribute('selected', '');
+				s.setAttribute('display', n++);
+			}
+
+			ndisplay--;
+		}
+
+		this.saveValues(sb, ul);
+
+		ul.setAttribute('tabindex', -1);
+		sb.setAttribute('tabindex', 0);
+
+		if (ndisplay < 0)
+			sb.setAttribute('more', '')
+		else
+			sb.removeAttribute('more');
+
+		if (ndisplay == this.options.display_items)
+			sb.setAttribute('empty', '')
+		else
+			sb.removeAttribute('empty');
+
+		dom.content(more, (ndisplay == this.options.display_items)
+			? (this.options.select_placeholder ?? this.options.placeholder) : '···');
+
+
+		sb.addEventListener('click', this.handleClick.bind(this));
+		sb.addEventListener('keydown', this.handleKeydown.bind(this));
+		sb.addEventListener('cbi-dropdown-close', this.handleDropdownClose.bind(this));
+		sb.addEventListener('cbi-dropdown-select', this.handleDropdownSelect.bind(this));
+
+		if ('ontouchstart' in window) {
+			sb.addEventListener('touchstart', ev => ev.stopPropagation());
+			window.addEventListener('touchstart', this.closeAllDropdowns);
+		}
+		else {
+			sb.addEventListener('focus', this.handleFocus.bind(this));
+
+			canary.addEventListener('focus', this.handleCanaryFocus.bind(this));
+
+			window.addEventListener('click', this.closeAllDropdowns);
+		}
+
+		if (create) {
+			create.addEventListener('keydown', this.handleCreateKeydown.bind(this));
+			create.addEventListener('focus', this.handleCreateFocus.bind(this));
+			create.addEventListener('blur', this.handleCreateBlur.bind(this));
+
+			const li = findParent(create, 'li');
+
+			li.setAttribute('unselectable', '');
+			li.addEventListener('click', this.handleCreateClick.bind(this));
+		}
+
+		this.node = sb;
+
+		this.setUpdateEvents(sb, 'cbi-dropdown-open', 'cbi-dropdown-close');
+		this.setChangeEvents(sb, 'cbi-dropdown-change', 'cbi-dropdown-close');
+
+		dom.bindClassInstance(sb, this);
+
+		return sb;
+	},
+
+	toggleItem(sb, li, force_state) {
+		const ul = li.parentNode;
+
+		if (li.hasAttribute('unselectable'))
+			return;
+
+		if (this.options.multiple) {
+			const cbox = li.querySelector('input[type="checkbox"]');
+			const items = li.parentNode.querySelectorAll('li');
+			const label = sb.querySelector('ul.preview');
+			let sel = li.parentNode.querySelectorAll('[selected]').length;
+			const more = sb.querySelector('.more');
+			let ndisplay = this.options.display_items;
+			let n = 0;
+
+			if (li.hasAttribute('selected')) {
+				if (force_state !== true) {
+					if (sel > 1 || this.options.optional) {
+						li.removeAttribute('selected');
+						cbox.checked = cbox.disabled = false;
+						sel--;
+
+						if (this.options.keep_order)
+							li.removeAttribute('data-order');
+					}
+					else {
+						cbox.disabled = true;
+					}
+				}
+			}
+			else {
+				if (force_state !== false) {
+					li.setAttribute('selected', '');
+					cbox.checked = true;
+					cbox.disabled = false;
+					sel++;
+
+					if (this.options.keep_order)
+						li.setAttribute('data-order', ++this.orderCounter);
+				}
+			}
+
+			while (label && label.firstElementChild)
+				label.removeChild(label.firstElementChild);
+
+			for (let i = 0; i < items.length; i++) {
+				items[i].removeAttribute('display');
+				if (items[i].hasAttribute('selected')) {
+					if (ndisplay-- > 0) {
+						items[i].setAttribute('display', n++);
+						if (label)
+							label.appendChild(items[i].cloneNode(true));
+					}
+					const c = items[i].querySelector('input[type="checkbox"]');
+					if (c)
+						c.disabled = (sel == 1 && !this.options.optional);
+				}
+			}
+
+			if (ndisplay < 0)
+				sb.setAttribute('more', '');
+			else
+				sb.removeAttribute('more');
+
+			if (ndisplay === this.options.display_items)
+				sb.setAttribute('empty', '');
+			else
+				sb.removeAttribute('empty');
+
+			dom.content(more, (ndisplay === this.options.display_items)
+				? (this.options.select_placeholder ?? this.options.placeholder) : '···');
+		}
+		else {
+			let sel = li.parentNode.querySelector('[selected]');
+			if (sel) {
+				sel.removeAttribute('display');
+				sel.removeAttribute('selected');
+			}
+
+			li.setAttribute('display', 0);
+			li.setAttribute('selected', '');
+
+			this.closeDropdown(sb);
+		}
+
+		this.saveValues(sb, ul);
+	},
+
+	saveValues(sb, ul) {
+		const sel = Array.from(ul.querySelectorAll('li[selected]'));
+		const div = sb.lastElementChild;
+		const name = this.options.name;
+		let strval = '';
+		const values = [];
+
+		if (this.options.keep_order) {
+			sel.sort((a, b) =>
+				(+a.getAttribute('data-order') || 0) -
+				(+b.getAttribute('data-order') || 0)
+			);
+		}
+
+		while (div.lastElementChild)
+			div.removeChild(div.lastElementChild);
+
+		sel.forEach(s => {
+			if (s.hasAttribute('placeholder'))
+				return;
+
+			const v = {
+				text: s.innerText,
+				value: s.hasAttribute('data-value') ? s.getAttribute('data-value') : s.innerText,
+				element: s
+			};
+
+			div.appendChild(E('input', {
+				type: 'hidden',
+				name: name,
+				value: v.value
+			}));
+
+			values.push(v);
+
+			strval += strval.length ? ` ${v.value}` : v.value;
+		});
+
+		const detail = {
+			instance: this,
+			element: sb
+		};
+
+		if (this.options.multiple)
+			detail.values = values;
+		else
+			detail.value = values.length ? values[0] : null;
+
+		sb.value = strval;
+
+		sb.dispatchEvent(new CustomEvent('cbi-dropdown-change', {
+			bubbles: true,
+			detail: detail
+		}));
+	}
+});
+
 /* Method */
 /* thanks to homeproxy */
 function calcStringMD5(e) {
@@ -839,48 +1245,95 @@ function calcStringMD5(e) {
 	return (p(a) + p(b) + p(c) + p(d)).toLowerCase();
 }
 
+/* Thanks to luci-app-ssr-plus */
+function base64Prefmt(str) {
+	str = str.replace(/-/g, '+').replace(/_/g, '/');
+	const padding = (4 - (str.length % 4)) % 4;
+	if (padding)
+		str += '='.repeat(padding);
+
+	return str;
+}
+
 /* thanks to homeproxy */
-function decodeBase64Str(str) {
+/**
+ * General Base64 Decoding
+ * @param {string} str - Base64 string
+ * @param {boolean} asText - true: decoded string (UTF-8), false: Uint8Array
+ * @returns {string|Uint8Array}
+ */
+function decodeBase64(str, asText = false) {
 	if (!str)
 		return null;
 
-	/* Thanks to luci-app-ssr-plus */
-	str = str.replace(/-/g, '+').replace(/_/g, '/');
-	let padding = (4 - (str.length % 4)) % 4;
-	if (padding)
-		str = str + Array(padding + 1).join('=');
+	str = base64Prefmt(str);
 
-	return decodeURIComponent(Array.prototype.map.call(atob(str), (c) =>
-		'%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-	).join(''));
+	if (asText)
+		return decodeURIComponent(Array.prototype.map.call(atob(str), c =>
+			'%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+		).join(''));
+
+	return Uint8Array.fromBase64(str); // OR Uint8Array.from(atob(str), c => c.charCodeAt(0));
 }
 
-function encodeBase64Str(str) {
-	if (!str)
+/**
+ * General Base64 Encoding
+ * @param {string|Array|ArrayBuffer|Uint8Array} input - String or binary data to be encoded
+ * @returns {string}
+ */
+function encodeBase64(input) {
+	if (isEmpty(input))
 		return null;
 
-	let buf = encodeURIComponent(str).split('%').slice(1).map(h => parseInt(h, 16));
-	return btoa(String.fromCharCode(...buf));
+	if (typeof input === 'string') {
+		const rawStr = encodeURIComponent(input).replace(/%([0-9A-F]{2})/g, (match, p1) =>
+			String.fromCharCode(parseInt(p1, 16))
+		);
+		return btoa(rawStr);
+	}
+
+	const buf = (input instanceof ArrayBuffer) ? new Uint8Array(input) : input;
+	return new Uint8Array(buf).toBase64(); // OR btoa(String.fromCharCode.apply(null, buf));
 }
 
-function decodeBase64Bin(str) {
-	if (!str)
+// thanks to https://github.com/scottschiller/ArmorAlley/blob/master/src/floppy/index-floppy.html
+/**
+ * Unzip Gzip data
+ * @param {string|Array|ArrayBuffer|Uint8Array} input - Input data (Base64 string or binary object)
+ * @param {boolean} asText - Return a string? (true: text, false: arrayBuffer)
+ * @returns {Promise<string|Uint8Array>}
+ */
+async function decompressGzip(input, asText = false) {
+	if (isEmpty(input))
 		return null;
 
-	/* Thanks to luci-app-ssr-plus */
-	str = str.replace(/-/g, '+').replace(/_/g, '/');
-	let padding = (4 - (str.length % 4)) % 4;
-	if (padding)
-		str = str + Array(padding + 1).join('=');
+	const ds = new DecompressionStream('gzip');
 
-	return Array.prototype.map.call(atob(str), c => c.charCodeAt(0)); // OR Uint8Array.fromBase64(str);
-}
+	let blob_in;
+	if (typeof input === 'string') {
+		if (input.match(/^H4sI/)) { // Gzip magic + Deflate
+			const response = await window.fetch('data:application/octet-stream;base64,' + base64Prefmt(input));
+			blob_in = await response.blob();
+		} else
+			throw new Error('Not a valid base64 encoded gzip');
+	} else {
+		// The `input` should be `Array` or `ArrayBuffer` or `Uint8Array`.
+		input = new Uint8Array(input);
+		if (input.subarray(0, 3).join(',') === [0x1f, 0x8b, 0x08].join(',')) // Gzip magic + Deflate
+			blob_in = new Blob([input]);
+		else
+			throw new Error('Not a valid gzip');
+	}
 
-function encodeBase64Bin(buf) {
-	if (isEmpty(buf))
-		return null;
+	const decodedStream = blob_in.stream().pipeThrough(ds);
+	const blob_out = await new window.Response(decodedStream).blob();
 
-	return btoa(String.fromCharCode(...buf)); // OR new Uint8Array(buf).toBase64();
+	if (asText)
+		return await blob_out.text();
+	else {
+		const buf = await blob_out.arrayBuffer();
+		return new Uint8Array(buf);
+	}
 }
 
 function generateRand(type, length) {
@@ -916,11 +1369,11 @@ function shuffle(StrORArr) {
 	else
 		throw new Error(`String or Array only`);
 
-    for (let i = arr.length - 1; i > 0; i--) {         // Traverse the array from back to front
-        const j = Math.floor(Math.random() * (i + 1)); // Generate a random index between 0 and i
+	for (let i = arr.length - 1; i > 0; i--) {         // Traverse the array from back to front
+		const j = Math.floor(Math.random() * (i + 1)); // Generate a random index between 0 and i
 
-        [arr[i], arr[j]] = [arr[j], arr[i]];           // Swap positions
-    }
+		[arr[i], arr[j]] = [arr[j], arr[i]];           // Swap positions
+	}
 
 	if (typeof StrORArr === 'string')
 		return arr.join('');
@@ -951,7 +1404,8 @@ function yaml2json(content, command) {
 
 function isEmpty(res) {
 	if (res == null) return true;                                                // null, undefined
-	if (typeof res === 'string' || Array.isArray(res)) return res.length === 0;  // empty String/Array
+	if (typeof res.length === 'number') return res.length === 0;                 // empty String/Array/TypedArray
+	if (res instanceof ArrayBuffer) return res.byteLength === 0;                 // empty ArrayBuffer
 	if (typeof res === 'object') {
 		if (res instanceof Map || res instanceof Set) return res.size === 0;     // empty Map/Set
 		return Object.keys(res).length === 0;                                    // empty Object
@@ -1043,84 +1497,68 @@ function loadModalTitle(title, addtitle, section_id) {
 	return label ? title + ' » ' + label : addtitle;
 }
 
-function loadProxyGroupLabel(preadds, section_id) {
+function loadLabel(preadds, section_id) {
 	delete this.keylist;
 	delete this.vallist;
 
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	uci.sections(this.config, 'proxy_group', (res) => {
-		if (res.enabled !== '0')
-			this.value(res['.name'], res.label);
-	});
+	for (const arr of preadds || [])
+		this.value(...arr);
 
 	return this.super('load', section_id);
 }
 
-function loadNodeLabel(preadds, section_id) {
-	delete this.keylist;
-	delete this.vallist;
+function loadLabelValues(uciconfig, sectiontype, options = {}) {
+	const values = [];
 
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	uci.sections(this.config, 'node', (res) => {
-		if (res.enabled !== '0')
-			this.value(res['.name'], res.label);
-	});
+	switch (sectiontype) {
+		case 'proxy_group':
+		case 'node':
+		case 'provider':
+			uci.sections(uciconfig, sectiontype, (res) => {
+				if (res.enabled !== '0')
+					values.push([res['.name'], res.label]);
+			});
+			break;
+		case 'ruleset':
+			uci.sections(uciconfig, sectiontype, (res) => {
+				if (
+					res.enabled !== '0' &&
+					(!options.behaviors ||
+					  options.behaviors.includes(res.behavior))
+				) {
+					values.push([res['.name'], res.label]);
+				}
+			});
+			break;
+		case 'subrule-group': {
+			const groups = new Set();
 
-	return this.super('load', section_id);
-}
+			uci.sections(uciconfig, 'subrules', (res) => {
+				if (res.enabled !== '0')
+					groups.add(res.group);
+			});
 
-function loadProviderLabel(preadds, section_id) {
-	delete this.keylist;
-	delete this.vallist;
+			for (const group of groups)
+				values.push([group, group]);
+			break;
+		}
+		case 'rematch-name': {
+			const names = new Set();
 
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	uci.sections(this.config, 'provider', (res) => {
-		if (res.enabled !== '0')
-			this.value(res['.name'], res.label);
-	});
+			uci.sections(uciconfig, 'node', (res) => {
+				if (res.enabled !== '0' && res.target_rematch_name)
+					names.add(res.target_rematch_name);
+			});
 
-	return this.super('load', section_id);
-}
+			for (const name of names)
+				values.push([name, name]);
+			break;
+		}
+		default:
+			break;
+	}
 
-function loadRulesetLabel(preadds, behaviors, section_id) {
-	delete this.keylist;
-	delete this.vallist;
-
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	uci.sections(this.config, 'ruleset', (res) => {
-		if (res.enabled !== '0')
-			if (behaviors ? behaviors.includes(res.behavior) : true)
-				this.value(res['.name'], res.label);
-	});
-
-	return this.super('load', section_id);
-}
-
-function loadSubRuleGroup(preadds, section_id) {
-	delete this.keylist;
-	delete this.vallist;
-
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	let groups = {};
-	uci.sections(this.config, 'subrules', (res) => {
-		if (res.enabled !== '0')
-			groups[res.group] = res.group;
-	});
-	Object.keys(groups).forEach((group) => {
-		this.value(group, group);
-	});
-
-	return this.super('load', section_id);
+	return values;
 }
 
 function renderStatus(ElId, isRunning, instance, noGlobal) {
@@ -1316,7 +1754,7 @@ function textvalue2Value(section_id) {
 	let cval = this.cfgvalue(section_id);
 	let i = this.keylist.indexOf(cval);
 
-	return this.vallist[i];
+	return this.vallist[i] ?? cval;
 }
 
 function validateAuth(section_id, value) {
@@ -1370,7 +1808,7 @@ function validateCommonPort(section_id, value) {
 	for (let custom of arr) {
 		if (!routing_port_type.map(e => e[0]).includes(custom)) {
 			let ports = [];
-			for (let i of custom.split(',')) {
+			for (let i of custom.split(this.hm_separator ?? ',')) {
 				if (!stubValidator.apply('port', i) && !stubValidator.apply('portrange', i))
 					return _('Expecting: %s').format(_('valid port value'));
 				if (ports.includes(i))
@@ -1443,6 +1881,18 @@ function validateUrl(section_id, value) {
 	return true;
 }
 
+function validateHexstr(length, section_id, value) {
+	if (!value)
+		return true;
+
+	length /= 4; // Convert bits to hex characters
+	const regexp = new RegExp(`^[0-9a-fA-F]{${length}}$`);
+	if (!value.match(regexp))
+		return _('Expecting: %s').format(_('valid hex string with %d characters').format(length));
+
+	return true;
+}
+
 function validateBase64Key(length, section_id, value) {
 	/* Thanks to luci-proto-wireguard */
 	if (value)
@@ -1510,9 +1960,9 @@ function validateSudokuCustomTable(section_id, value) {
 		return _('Expecting: %s').format(_('valid format: 2x, 2p, 4v'));
 
 	const counts = {};
-    for (const c of value)
-        counts[c] = (counts[c] || 0) + 1;
-    if (!(counts.x === 2 && counts.p === 2 && counts.v === 4))
+	for (const c of value)
+		counts[c] = (counts[c] || 0) + 1;
+	if (!(counts.x === 2 && counts.p === 2 && counts.v === 4))
 		return _('Expecting: %s').format(_('valid format: 2x, 2p, 4v'));
 
 	return true;
@@ -1550,15 +2000,15 @@ function lsDir(type) {
 	});
 }
 
-function readFile(type, filename) {
+function readFile(type, filename, isbinary) {
 	const callReadFile = rpc.declare({
 		object: 'luci.fchomo',
 		method: 'file_read',
-		params: ['type', 'filename'],
+		params: ['type', 'filename', 'isbinary'],
 		expect: { '': {} }
 	});
 
-	return L.resolveDefault(callReadFile(type, filename), {}).then((res) => {
+	return L.resolveDefault(callReadFile(type, filename, isbinary), {}).then((res) => {
 		if (res.content ?? true) {
 			return res.content;
 		} else
@@ -1566,15 +2016,15 @@ function readFile(type, filename) {
 	});
 }
 
-function writeFile(type, filename, content) {
+function writeFile(type, filename, content, isbinary) {
 	const callWriteFile = rpc.declare({
 		object: 'luci.fchomo',
 		method: 'file_write',
-		params: ['type', 'filename', 'content'],
+		params: ['type', 'filename', 'content', 'isbinary'],
 		expect: { '': {} }
 	});
 
-	return L.resolveDefault(callWriteFile(type, filename, content), {}).then((res) => {
+	return L.resolveDefault(callWriteFile(type, filename, content, isbinary), {}).then((res) => {
 		if (res.result) {
 			return res.result;
 		} else
@@ -1664,6 +2114,7 @@ return baseclass.extend({
 	monospacefonts,
 	checkurls,
 	congestion_controller,
+	bbr_profiles,
 	stunserver,
 	dashrepos,
 	dashrepos_urlparams,
@@ -1693,6 +2144,7 @@ return baseclass.extend({
 	/* Prototype */
 	GridSection: CBIGridSection,
 	DynamicList: CBIDynamicList,
+	MultiValue: CBIMultiValue,
 	StaticList: CBIStaticList,
 	ListValue: CBIListValue,
 	RichValue: CBIRichValue,
@@ -1706,10 +2158,9 @@ return baseclass.extend({
 
 	/* Method */
 	calcStringMD5,
-	decodeBase64Str,
-	encodeBase64Str,
-	decodeBase64Bin,
-	encodeBase64Bin,
+	decodeBase64,
+	encodeBase64,
+	decompressGzip,
 	generateRand,
 	shuffle,
 	json2yaml,
@@ -1723,11 +2174,8 @@ return baseclass.extend({
 	// load
 	loadDefaultLabel,
 	loadModalTitle,
-	loadProxyGroupLabel,
-	loadNodeLabel,
-	loadProviderLabel,
-	loadRulesetLabel,
-	loadSubRuleGroup,
+	loadLabel,
+	loadLabelValues,
 	// render
 	renderStatus,
 	updateStatus,
@@ -1748,6 +2196,7 @@ return baseclass.extend({
 	validateUUID,
 	validateUrl,
 	// validate with bind this
+	validateHexstr,
 	validateBase64Key,
 	validateMTLSClientAuth,
 	validatePresetIDs,

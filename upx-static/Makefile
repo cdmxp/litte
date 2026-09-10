@@ -1,34 +1,36 @@
+
 # SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) kenzok8 <https://github.com/kenzok8>
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upx-static
-PKG_VERSION:=5.1.1
+PKG_VERSION:=5.2.1
 PKG_RELEASE:=1
-PKG_SOURCE_VERSION:=v5.1.1
+PKG_SOURCE_VERSION:=v5.2.1
 
 # Map OpenWrt $(ARCH) to UPX pre-built binary arch name.
 # NOTE: OpenWrt uses "aarch64", UPX tarball uses "arm64".
-ifeq ($(ARCH),x86_64)
+UPX_ARCH:=$(ARCH)
+ifeq ($(findstring x86_64,$(ARCH)),x86_64)
   UPX_ARCH:=amd64
-else ifeq ($(ARCH),i386)
+else ifeq ($(findstring i386,$(ARCH)),i386)
   UPX_ARCH:=i386
-else ifeq ($(ARCH),aarch64)
+else ifeq ($(findstring aarch64,$(ARCH)),aarch64)
   UPX_ARCH:=arm64
-else ifeq ($(ARCH),arm)
+else ifeq ($(findstring arm,$(ARCH)),arm)
   UPX_ARCH:=arm
-else ifeq ($(ARCH),armeb)
+else ifeq ($(findstring armeb,$(ARCH)),armeb)
   UPX_ARCH:=armeb
-else ifeq ($(ARCH),mipsel)
+else ifeq ($(findstring mipsel,$(ARCH)),mipsel)
   UPX_ARCH:=mipsel
-else ifeq ($(ARCH),mips)
+else ifeq ($(findstring mips,$(ARCH)),mips)
   UPX_ARCH:=mips
-else ifeq ($(ARCH),powerpc)
+else ifeq ($(findstring powerpc,$(ARCH)),powerpc)
   UPX_ARCH:=powerpc
-else ifeq ($(ARCH),powerpc64)
+else ifeq ($(findstring powerpc64,$(ARCH)),powerpc64)
   UPX_ARCH:=powerpc64le
-else ifeq ($(ARCH),riscv64)
+else ifeq ($(findstring riscv64,$(ARCH)),riscv64)
   UPX_ARCH:=riscv64
 endif
 
@@ -37,25 +39,25 @@ PKG_SOURCE_URL:=https://github.com/upx/upx/releases/download/$(PKG_SOURCE_VERSIO
 
 # AUTO-GENERATED HASHES BEGIN
 ifeq ($(UPX_ARCH),amd64)
-  PKG_HASH:=1ff660454227861e00772f743f66b900072116b9dc24f6ee28b97cce88a7828a
+  PKG_HASH:=402162aad30af47e60dbd767fb2e64ca394ace9727ba1f40283641f1d1b91657
 else ifeq ($(UPX_ARCH),i386)
-  PKG_HASH:=54242a7f1fa05ecc254c83fac89437987af19492f0b27a3def1cdcf4746f8053
+  PKG_HASH:=44b505d881337ef17ad03f03fd80f2ecdebc3a36077e1dd260ae1b359c713ba5
 else ifeq ($(UPX_ARCH),arm64)
-  PKG_HASH:=a307c2c821eeab47607ba5c232408b22ab884cca13884682508b98f7308b8443
+  PKG_HASH:=a72d112c5970a904a31da0b9c84f919bc16b9a311787c12245508544a78c7d36
 else ifeq ($(UPX_ARCH),arm)
-  PKG_HASH:=0d0ac4c2fd367ccf595522487db118a7ef07e31146ff3cebefe4b34381a00a78
+  PKG_HASH:=d74c0d8bfdd7aad9114470efaa14fa889158f3dbfbc7128ba76c403aee545ef8
 else ifeq ($(UPX_ARCH),armeb)
-  PKG_HASH:=46bcea55c16eb420df8567025b75bda6516ef1cb4b0b4e232a4a28f55f0add6c
+  PKG_HASH:=31ac41b612c4c1166dc7a7c194e2ad8fadcf9fdf25aa4bd3c14799823b9e5f9e
 else ifeq ($(UPX_ARCH),mipsel)
-  PKG_HASH:=6e2c901c927be893141fa680ff4b86c3ac48d8390e6505db2fcf3a7ccd0c599b
+  PKG_HASH:=84fc6c0c33ed668c099d4f82d72ac7fd4070b19797ebb990f999278267b94e0d
 else ifeq ($(UPX_ARCH),mips)
-  PKG_HASH:=15d3949dd620a86ebff7622201c1b81b00677face68ab7d179b9e72b003759c9
+  PKG_HASH:=d2cd981ff725a31f9f596f80fcc5c1682e648a59231e220a3967c661c6d1fafb
 else ifeq ($(UPX_ARCH),powerpc)
-  PKG_HASH:=81bb6703ee02bd8b0664a8265fd607dccac606976c958d09333c4ed038aea2bf
+  PKG_HASH:=5f89a57f6e76c5b16016330ee5a2ca87f9bfbdcca5420bc042a1fde1798818ed
 else ifeq ($(UPX_ARCH),powerpc64le)
-  PKG_HASH:=d8789d959f0a2fdd07890ebb332173a9b076cb6db2cb1fb22a2699ffd9f884c6
+  PKG_HASH:=e914046633567c3255a6440bae4d6c13d9f90d458445b47b8474b048ca4072b7
 else ifeq ($(UPX_ARCH),riscv64)
-  PKG_HASH:=8dec678ddcafb61837ecd59810f6ad89dfd30edd84333441aff44e088d4b7898
+  PKG_HASH:=a8663b4cb6523104a8a807362d0da6f5d6d55f6083152f78fa27fa9c05443c17
 else
   $(error Unsupported UPX_ARCH '$(UPX_ARCH)' for upx-static)
 endif

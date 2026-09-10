@@ -6,34 +6,34 @@
 'require uci';
 'require view';
 
-var callServiceList = rpc.declare({
+const callServiceList = rpc.declare({
 	object: 'service',
 	method: 'list',
 	params: ['name'],
 	expect: { '': {} }
 });
 
-function getServiceStatus() {
-	return L.resolveDefault(callServiceList('openlist2'), {}).then(function (res) {
-		var isRunning = false;
+const getServiceStatus = () => {
+	return L.resolveDefault(callServiceList('openlist2'), {}).then(res => {
+		let isRunning = false;
 		try {
 			isRunning = res['openlist2']['instances']['openlist2']['running'];
 		} catch (e) { }
 		return isRunning;
 	});
-}
+};
 
-function renderStatus(isRunning, protocol, webport, site_url) {
-	var spanTemp = '<em><span style="color:%s"><strong>%s %s</strong></span></em>';
-	var renderHTML;
+const renderStatus = (isRunning, protocol, webport, site_url) => {
+	const spanTemp = '<em><span style="color:%s"><strong>%s %s</strong></span></em>';
+	let renderHTML;
 	if (isRunning) {
-		var buttonUrl = '';
+		let buttonUrl = '';
 		if (site_url && site_url.trim() !== '') {
 			buttonUrl = site_url;
 		} else {
-			buttonUrl = String.format('%s//%s:%s/', protocol, window.location.hostname, webport);
+			buttonUrl = `${protocol}//${window.location.hostname}:${webport}/`;
 		}
-		var button = String.format('<input class="cbi-button-reload" type="button" style="margin-left: 50px" value="%s" onclick="window.open(\'%s\')">',
+		const button = String.format('<input class="cbi-button-reload" type="button" style="margin-left: 50px" value="%s" onclick="window.open(\'%s\')">',
 			_('Open Web Interface'), buttonUrl);
 		renderHTML = spanTemp.format('green', 'OpenList', _('RUNNING')) + button;
 	} else {
@@ -41,20 +41,20 @@ function renderStatus(isRunning, protocol, webport, site_url) {
 	}
 
 	return renderHTML;
-}
+};
 
 return view.extend({
-	load: function () {
+	load() {
 		return Promise.all([
 			uci.load('openlist2')
 		]);
 	},
 
-	handleResetPassword: async function (data) {
-		var data_dir = uci.get(data[0], '@openlist2[0]', 'data_dir') || '/etc/openlist2';
+	async handleResetPassword(data) {
+		const data_dir = uci.get(data[0], '@openlist2[0]', 'data_dir') || '/etc/openlist2';
 		try {
-			var newpassword = await fs.exec('/usr/bin/openlist2', ['admin', 'random', '--data', data_dir]);
-			var new_password = newpassword.stdout.match(/password:\s*(\S+)/)[1];
+			const newpassword = await fs.exec('/usr/bin/openlist2', ['admin', 'random', '--data', data_dir]);
+			const new_password = newpassword.stdout.match(/password:\s*(\S+)/)[1];
 
 			const textArea = document.createElement('textarea');
 			textArea.value = new_password;
@@ -62,23 +62,23 @@ return view.extend({
 			textArea.select();
 			document.execCommand('copy');
 			document.body.removeChild(textArea);
-			alert(_('Username:') + 'admin\n' + _('New Password:') + new_password + '\n\n' + _('New password has been copied to clipboard.'));
+			alert(`${_('Username:')}admin\n${_('New Password:')}${new_password}\n\n${_('New password has been copied to clipboard.')}`);
 		} catch (error) {
 			console.error('Failed to reset password: ', error);
 		}
 	},
 
-	render: function (data) {
-		var m, s, o;
-		var webport = uci.get(data[0], '@openlist2[0]', 'port') || '5244';
-		var ssl = uci.get(data[0], '@openlist2[0]', 'ssl') || '0';
-		var protocol;
+	render(data) {
+		let m, s, o;
+		const webport = uci.get(data[0], '@openlist2[0]', 'port') || '5244';
+		const ssl = uci.get(data[0], '@openlist2[0]', 'ssl') || '0';
+		let protocol;
 		if (ssl === '0') {
 			protocol = 'http:';
 		} else if (ssl === '1') {
 			protocol = 'https:';
 		}
-		var site_url = uci.get(data[0], '@openlist2[0]', 'site_url') || '';
+		const site_url = uci.get(data[0], '@openlist2[0]', 'site_url') || '';
 
 		m = new form.Map('openlist2', _('OpenList'),
 			_('A file list program that supports multiple storage.'));
@@ -87,31 +87,33 @@ return view.extend({
 		s.anonymous = true;
 		s.addremove = false;
 
-		s.render = function () {
-			poll.add(function () {
-				return L.resolveDefault(getServiceStatus()).then(function (res) {
-					var view = document.getElementById('service_status');
-					view.innerHTML = renderStatus(res, protocol, webport, site_url);
+		s.render = () => {
+			poll.add(() => {
+				return L.resolveDefault(getServiceStatus()).then(res => {
+					const view = document.getElementById('service_status');
+					if (view)
+						view.innerHTML = renderStatus(res, protocol, webport, site_url);
 				});
 			});
 
 			return E('div', { class: 'cbi-section', id: 'status_bar' }, [
 				E('p', { id: 'service_status' }, _('Collecting data...'))
 			]);
-		}
+		};
 
 		s = m.section(form.NamedSection, '@openlist2[0]', 'openlist2');
 
 		s.tab('basic', _('Basic Settings'));
 		s.tab('global', _('Global Settings'));
-		s.tab("log", _("Logs"));
-		s.tab("database", _("Database"));
-		s.tab("scheme", _("Web Protocol"));
+		s.tab('log', _('Logs'));
+		s.tab('database', _('Database'));
+		s.tab('scheme', _('Web Protocol'));
 		s.tab('tasks', _('Task threads'));
 		s.tab('cors', _('CORS Settings'));
 		s.tab('s3', _('Object Storage'));
 		s.tab('ftp', _('FTP'));
 		s.tab('sftp', _('SFTP'));
+		s.tab('mcp', _('MCP'));
 
 		// init
 		o = s.taboption('basic', form.Flag, 'enabled', _('Enabled'));
@@ -179,6 +181,28 @@ return view.extend({
 		o = s.taboption('global', form.Flag, 'tls_insecure_skip_verify', _('Disable TLS Verify'));
 		o.default = true;
 		o.rmempty = false;
+
+		o = s.taboption('global', form.Value, 'auto_memory_limit', _('Auto Memory Limit (GB)'),
+			_('Automatically set memory limit based on device memory size, in GB. 0 to disable.'));
+		o.datatype = 'uinteger';
+		o.default = '4';
+		o.rmempty = false;
+
+		o = s.taboption('global', form.Value, 'min_free_memory', _('Min Free Memory (MB)'),
+			_('Minimum free memory to keep, in MB. The program will try to free memory when below this value.'));
+		o.datatype = 'uinteger';
+		o.default = '0';
+		o.rmempty = false;
+
+		o = s.taboption('global', form.Value, 'max_block_limit', _('Max Block Limit'),
+			_('Maximum number of blocking goroutines. 0 is unlimited.'));
+		o.datatype = 'uinteger';
+		o.default = '0';
+		o.rmempty = false;
+
+		o = s.taboption('global', form.Value, 'proxy_address', _('Proxy Address'),
+			_('HTTP proxy address for outgoing requests, e.g. http://127.0.0.1:7890'));
+		o.default = '';
 
 		// Logs
 		o = s.taboption('log', form.Flag, 'log', _('Enable Logs'));
@@ -272,6 +296,14 @@ return view.extend({
 			_('SSL key file path'));
 		o.rmempty = false;
 		o.depends('ssl', '1');
+		o = s.taboption('scheme', form.Flag, 'enable_h3', _('Enable HTTP/3'),
+			_('Enable HTTP/3 (QUIC) protocol.'));
+		o.rmempty = false;
+		o.depends('ssl', '1');
+
+		o = s.taboption('scheme', form.Flag, 'enable_h2c', _('Enable H2C'),
+			_('Enable HTTP/2 over cleartext (h2c).'));
+		o.rmempty = false;
 
 		// tasks
 		o = s.taboption('tasks', form.Value, 'download_workers', _('Download Workers'));
@@ -312,6 +344,40 @@ return view.extend({
 		o = s.taboption('tasks', form.Value, 'copy_max_retry', _('Copy Max Retry'));
 		o.datatype = 'uinteger';
 		o.default = '2';
+		o.rmempty = false;
+
+		o = s.taboption('tasks', form.Value, 'move_workers', _('Move Workers'));
+		o.datatype = 'uinteger';
+		o.default = '5';
+		o.rmempty = false;
+
+		o = s.taboption('tasks', form.Value, 'move_max_retry', _('Move Max Retry'));
+		o.datatype = 'uinteger';
+		o.default = '2';
+		o.rmempty = false;
+
+		o = s.taboption('tasks', form.Value, 'decompress_workers', _('Decompress Workers'));
+		o.datatype = 'uinteger';
+		o.default = '5';
+		o.rmempty = false;
+
+		o = s.taboption('tasks', form.Value, 'decompress_max_retry', _('Decompress Max Retry'));
+		o.datatype = 'uinteger';
+		o.default = '2';
+		o.rmempty = false;
+
+		o = s.taboption('tasks', form.Value, 'decompress_upload_workers', _('Decompress Upload Workers'));
+		o.datatype = 'uinteger';
+		o.default = '5';
+		o.rmempty = false;
+
+		o = s.taboption('tasks', form.Value, 'decompress_upload_max_retry', _('Decompress Upload Max Retry'));
+		o.datatype = 'uinteger';
+		o.default = '2';
+		o.rmempty = false;
+
+		o = s.taboption('tasks', form.Flag, 'allow_retry_canceled', _('Allow Retry Canceled Tasks'),
+			_('Allow retrying tasks that have been canceled.'));
 		o.rmempty = false;
 
 		// cors
@@ -363,7 +429,7 @@ return view.extend({
 
 		o = s.taboption('ftp', form.Value, 'connection_timeout', _('Connection timeout (seconds)'));
 		o.datatype = 'uinteger';
-		o.default = '900';
+		o.default = '30';
 		o.rmempty = false;
 
 		o = s.taboption('ftp', form.Flag, 'disable_active_mode', _('Disable active transfer mode'));
@@ -385,6 +451,10 @@ return view.extend({
 		o = s.taboption('sftp', form.Value, 'sftp_port', _('SFTP Port'));
 		o.datatype = 'and(port,min(1))';
 		o.default = 5222;
+		o.rmempty = false;
+
+		// mcp
+		o = s.taboption('mcp', form.Flag, 'mcp', _('Enabled MCP'), _('Enable MCP (Model Context Protocol) server.'));
 		o.rmempty = false;
 
 		return m.render();

@@ -68,7 +68,7 @@ get_textoffset() {
     temp_dir="$(mktemp -d)"
     (
         cd ${temp_dir}
-        tar -xf "${boot_tgz_file}" "${vmlinuz_name}"
+        tar --no-same-owner -xf "${boot_tgz_file}" "${vmlinuz_name}"
     )
     # With TEXT_OFFSET patch is [ 0108 ], without TEXT_OFFSET patch is [ 0000 ]
     [[ "$(hexdump -n 15 -x "${temp_dir}/${vmlinuz_name}" 2>/dev/null | head -n 1 | awk '{print $7}')" == "0108" ]] && K510="0"
@@ -274,7 +274,7 @@ update_kernel() {
             dtb* 2>/dev/null
     )
     # Extract the new kernel
-    tar -xf ${P4_PATH}/boot-${kernel_name}.tar.gz -C /boot
+    tar --no-same-owner -xf ${P4_PATH}/boot-${kernel_name}.tar.gz -C /boot
 
     # Check if the file exists
     local valid_files
@@ -283,8 +283,8 @@ update_kernel() {
         rm -f /boot/uInitrd*
     else
         valid_files="vmlinuz-${kernel_name} uInitrd-${kernel_name} config-${kernel_name} System.map-${kernel_name}"
-        # wxy-oect: MODEL_ID numbers r304,r306 and w[0-9]{3}, require special handling of uInitrd
-        [[ "${MODEL_ID}" =~ ^(r304|r306|w[0-9]{3})$ ]] || rm -f /boot/initrd.img*
+        # wxy-oect: MODEL_ID numbers r306,r307 and w[0-9]{3}, require special handling of uInitrd
+        [[ "${MODEL_ID}" =~ ^(r306|r307|w[0-9]{3})$ ]] || rm -f /boot/initrd.img*
     fi
     for f in ${valid_files}; do [[ -f "/boot/${f}" ]] || restore_kernel; done
 
@@ -304,8 +304,8 @@ update_kernel() {
             ln -sf vmlinuz-${kernel_name} ${MYBOOT_VMLINUZ}
         fi
 
-        # wxy-oect: MODEL_ID numbers r304 and r306, require special handling of uInitrd
-        [[ "${MODEL_ID}" =~ ^(r304|r306)$ ]] && ln -sf initrd.img-${kernel_name} uInitrd
+        # wxy-oect: MODEL_ID numbers r306 and r307, require special handling of uInitrd
+        [[ "${MODEL_ID}" =~ ^(r306|r307)$ ]] && ln -sf initrd.img-${kernel_name} uInitrd
     )
 
     echo -e "(1/3) Unpacking [ boot-${kernel_name}.tar.gz ] done."
@@ -319,14 +319,14 @@ update_kernel() {
         else
             (cd /boot && mkdir -p dtb-${kernel_name}/${PLATFORM} && ln -sf dtb-${kernel_name} dtb)
         fi
-        tar -xf ${P4_PATH}/dtb-${PLATFORM}-${kernel_name}.tar.gz -C /boot/dtb/${PLATFORM}
+        tar --no-same-owner -xf ${P4_PATH}/dtb-${PLATFORM}-${kernel_name}.tar.gz -C /boot/dtb/${PLATFORM}
         [[ "$(ls /boot/dtb/${PLATFORM} -l 2>/dev/null | grep "^-" | wc -l)" -ge "1" ]] || error_msg "/boot/dtb/${PLATFORM} file is missing."
         echo -e "(2/3) Unpacking [ dtb-${PLATFORM}-${kernel_name}.tar.gz ] done."
     fi
 
     # 03. for /lib/modules/*
     rm -rf /lib/modules/*
-    tar -xf ${P4_PATH}/modules-${kernel_name}.tar.gz -C /lib/modules
+    tar --no-same-owner -xf ${P4_PATH}/modules-${kernel_name}.tar.gz -C /lib/modules
     (
         cd /lib/modules/${kernel_name}
         rm -f *.ko

@@ -7,13 +7,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alist
-PKG_VERSION:=3.58.0
-PKG_WEB_VERSION:=3.58.0
+PKG_VERSION:=3.64.0
+PKG_WEB_VERSION:=3.64.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/AlistGo/alist/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2d93682724bbce68ec07156bad2d95211cde41f75b7ef561ae57463d1c22feee
+PKG_HASH:=599065ec4b26375e4012cf212415f4195c9b92864bdcde4105356261920563f4
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILE:=LICENSE
@@ -23,7 +23,7 @@ define Download/$(PKG_NAME)-web
   FILE:=$(PKG_NAME)-web-$(PKG_WEB_VERSION).tar.gz
   URL_FILE:=dist.tar.gz
   URL:=https://github.com/AlistGo/alist-web/releases/download/$(PKG_WEB_VERSION)/
-HASH:=411eb77d3756170d03c9b743040e07fc1948fd734c9872c1f2135b2e8da2a4ad
+HASH:=b80550662de42a2f8a72d35bca8ed66ec9ad0c24a9a02ceec6a01bf5038cf6f4
 endef
 
 PKG_BUILD_DEPENDS:=golang/host
@@ -31,14 +31,14 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 PKG_BUILD_FLAGS:=no-mips16
 
-GO_PKG:=github.com/AlistGo/alist
+GO_PKG:=github.com/alist-org/alist/v3
 GO_PKG_LDFLAGS:= \
-	-X '$(GO_PKG)/v3/internal/conf.BuiltAt=$(shell date '+%Y-%m-%d %H:%M:%S %z')' \
-	-X '$(GO_PKG)/v3/internal/conf.GoVersion=$(shell $(STAGING_DIR_HOSTPKG)/bin/go version | sed 's/go version //')' \
-	-X '$(GO_PKG)/v3/internal/conf.GitAuthor=Xhofe <i@nn.ci>' \
-	-X '$(GO_PKG)/v3/internal/conf.GitCommit=tarball/$(shell echo $(PKG_HASH) | cut -c 1-7)' \
-	-X '$(GO_PKG)/v3/internal/conf.Version=v$(PKG_VERSION) (OpenWrt $(ARCH_PACKAGES))' \
-	-X '$(GO_PKG)/v3/internal/conf.WebVersion=$(PKG_WEB_VERSION)'
+	-X '$(GO_PKG)/internal/conf.BuiltAt=$(shell date '+%Y-%m-%d %H:%M:%S %z')' \
+	-X '$(GO_PKG)/internal/conf.GoVersion=$(shell $(STAGING_DIR_HOSTPKG)/bin/go version | sed 's/go version //')' \
+	-X '$(GO_PKG)/internal/conf.GitAuthor=Xhofe <i@nn.ci>' \
+	-X '$(GO_PKG)/internal/conf.GitCommit=tarball/$(shell echo $(PKG_HASH) | cut -c 1-7)' \
+	-X '$(GO_PKG)/internal/conf.Version=v$(PKG_VERSION) (OpenWrt $(ARCH_PACKAGES))' \
+	-X '$(GO_PKG)/internal/conf.WebVersion=$(PKG_WEB_VERSION)'
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
